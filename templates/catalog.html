@@ -61,7 +61,6 @@
         <strong>{{ product.name }}</strong>
         <div class="catalog-meta">
           <span>{{ product.preco_venda|money }}</span>
-          <small>Dispon&iacute;vel: {{ stock_info.total }}</small>
         </div>
         <p>{{ product.category.name if product.category else 'Produto' }}</p>
         {% if product.descricao %}

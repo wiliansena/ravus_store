@@ -497,6 +497,30 @@ def register_routes(app):
         flash("Variacao adicionada.")
         return redirect(url_for("edit_product", product_id=product_id))
 
+    @app.route("/produtos/variacoes/<int:variant_id>/editar", methods=["POST"])
+    @permission_required("produtos")
+    def update_variant(variant_id):
+        variant = db.get_or_404(ProductVariant, variant_id)
+        variant.color_id = request.form.get("color_id") or None
+        variant.size_id = request.form.get("size_id") or None
+        variant.min_stock = int(request.form.get("min_stock") or 1)
+        db.session.commit()
+        flash("Variacao atualizada.")
+        return redirect(url_for("edit_product", product_id=variant.product_id))
+
+    @app.route("/produtos/variacoes/<int:variant_id>/excluir", methods=["POST"])
+    @permission_required("produtos")
+    def delete_variant(variant_id):
+        variant = db.get_or_404(ProductVariant, variant_id)
+        product_id = variant.product_id
+        if variant.stock_movements or variant.sale_items:
+            flash("Nao foi possivel excluir: a variacao possui estoque ou vendas vinculadas.", "error")
+            return redirect(url_for("edit_product", product_id=product_id))
+        db.session.delete(variant)
+        db.session.commit()
+        flash("Variacao excluida.")
+        return redirect(url_for("edit_product", product_id=product_id))
+
     @app.route("/estoque", methods=["GET", "POST"])
     @permission_required("estoque")
     def stock():

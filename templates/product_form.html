@@ -32,26 +32,47 @@
       <label>{{ form.min_stock.label.text }}{{ form.min_stock(type='number', min='0') }}</label>
     </div>
     {% endif %}
-    <button>{{ 'Salvar alterações' if product else 'Salvar produto' }}</button>
+    <button>{{ 'Salvar altera&ccedil;&otilde;es' if product else 'Salvar produto' }}</button>
   </form>
 
   {% if product %}
   <section class="panel">
-    <h3>Variações e imagens</h3>
+    <h3>Varia&ccedil;&otilde;es</h3>
     <form method="post" action="{{ url_for('add_variant', product_id=product.id) }}" class="inline-form">
       <select name="color_id"><option value="">Cor</option>{% for c in colors %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
       <select name="size_id"><option value="">Tam.</option>{% for s in sizes %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select>
-      <input name="min_stock" type="number" min="0" value="1">
+      <input name="min_stock" type="number" min="0" value="1" aria-label="Estoque minimo">
       <button>Adicionar</button>
     </form>
-    <ul>
-      {% for variant in product.variants %}
-      <li>{{ variant.label }}: {{ variant.stock }} un.</li>
-      {% else %}
-      <li>Nenhuma variação cadastrada.</li>
-      {% endfor %}
-    </ul>
 
+    <div class="variant-list">
+      {% for variant in product.variants %}
+      <div class="variant-row">
+        <form method="post" action="{{ url_for('update_variant', variant_id=variant.id) }}" class="variant-edit-form">
+          <select name="color_id">
+            <option value="">Cor</option>
+            {% for c in colors %}<option value="{{ c.id }}" {% if variant.color_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+          </select>
+          <select name="size_id">
+            <option value="">Tam.</option>
+            {% for s in sizes %}<option value="{{ s.id }}" {% if variant.size_id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+          </select>
+          <input name="min_stock" type="number" min="0" value="{{ variant.min_stock }}" aria-label="Estoque minimo">
+          <span>Saldo: {{ variant.stock }}</span>
+          <button class="edit-button">Salvar</button>
+        </form>
+        <form method="post" action="{{ url_for('delete_variant', variant_id=variant.id) }}">
+          <button class="danger-button" {% if variant.stock_movements or variant.sale_items %}disabled title="Possui estoque ou venda vinculada"{% endif %}>Excluir</button>
+        </form>
+      </div>
+      {% else %}
+      <p>Nenhuma varia&ccedil;&atilde;o cadastrada.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>Imagens</h3>
     <div class="product-images-admin">
       {% for image in product.ordered_images %}
       <figure class="{{ 'primary-image' if image.is_primary else '' }}">

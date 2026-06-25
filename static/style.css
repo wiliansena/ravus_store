@@ -939,3 +939,43 @@ th {
   main { padding: 0; }
   .receipt { border: 0; }
 }
+
+.variant-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.variant-row {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-bottom: 10px;
+}
+
+.variant-edit-form {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(90px, 1fr) minmax(80px, 1fr) 80px auto auto;
+}
+
+.variant-edit-form span {
+  color: var(--muted);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.variant-row button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+@media (max-width: 760px) {
+  .variant-row,
+  .variant-edit-form {
+    grid-template-columns: 1fr;
+  }
+}
