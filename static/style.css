@@ -988,45 +988,7 @@ th {
 .copy-button:hover {
   background: #eef7ff;
 }
-.catalog-guidance {
-  align-items: start;
-  background: #fff9e8;
-  border: 1px solid #e8c46a;
-  border-left: 5px solid #d9a51f;
-  border-radius: 8px;
-  color: #5f3d06;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
-  margin-bottom: 18px;
-  padding: 14px 16px;
-}
 
-.catalog-guidance strong {
-  display: block;
-  font-size: 16px;
-  line-height: 1.25;
-  margin-bottom: 4px;
-}
-
-.catalog-guidance p,
-.catalog-guidance ul {
-  line-height: 1.45;
-  margin: 0;
-}
-
-.catalog-guidance ul {
-  display: grid;
-  gap: 5px;
-  padding-left: 18px;
-}
-
-@media (max-width: 760px) {
-  .catalog-guidance {
-    grid-template-columns: 1fr;
-    padding: 13px 14px;
-  }
-}
 
 .brand-link {
   color: inherit;
