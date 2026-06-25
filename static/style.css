@@ -988,3 +988,22 @@ th {
 .copy-button:hover {
   background: #eef7ff;
 }
+.catalog-guidance {
+  background: #fff7dd;
+  border: 1px solid #f0cf7a;
+  border-radius: 8px;
+  color: #6f4708;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+}
+
+.catalog-guidance strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 5px;
+}
+
+.catalog-guidance p {
+  line-height: 1.45;
+  margin: 0;
+}
