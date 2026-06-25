@@ -233,6 +233,8 @@ server {
 
     location /static/ {
         alias /var/www/ravus_store/static/;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
     }
 
     location / {
@@ -269,5 +271,6 @@ git pull
 source venv/bin/activate
 pip install -r requirements.txt
 flask db upgrade
+python gerar_thumbnails.py
 sudo systemctl restart ravus_store
 ```

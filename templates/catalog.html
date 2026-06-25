@@ -2,12 +2,12 @@
 {% block content %}
 <header class="page-header">
   <div>
-    <p class="eyebrow">Catálogo Online</p>
+    <p class="eyebrow">Cat&aacute;logo Online</p>
     <div class="catalog-brand">
       {% if store_settings and store_settings.logo_url %}
-      <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}">
+      <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}" loading="eager" decoding="async">
       {% endif %}
-      <h2>{{ store_settings.store_name if store_settings else 'Catálogo' }}</h2>
+      <h2>{{ store_settings.store_name if store_settings else 'Cat&aacute;logo' }}</h2>
     </div>
   </div>
 </header>
@@ -24,6 +24,7 @@
   <section class="catalog-grid">
     {% for product in products %}
     <article class="catalog-card" data-product-id="{{ product.id }}">
+      {% set product_index = loop.index0 %}
       {% set stock_info = namespace(total=0, first_variant=None) %}
       {% for variant in product.variants %}
         {% if variant.stock > 0 %}
@@ -34,15 +35,24 @@
         {% endif %}
       {% endfor %}
       <div class="catalog-slider">
-        {% set images = product.catalog_images %}
+        {% set images = product.ordered_images %}
         {% if images %}
           {% for image in images %}
-          <img class="slide {{ 'active' if loop.first else '' }}" src="{{ image }}" alt="{{ product.name }}" data-zoom-image>
+          <img
+            class="slide {{ 'active' if loop.first else '' }}"
+            {% if loop.first %}src="{{ image.thumb_url }}"{% else %}data-src="{{ image.thumb_url }}"{% endif %}
+            data-full-image="{{ image.file_url }}"
+            alt="{{ product.name }}"
+            loading="{{ 'eager' if loop.first and product_index < 4 else 'lazy' }}"
+            decoding="async"
+            data-zoom-image>
           {% endfor %}
           {% if images|length > 1 %}
-          <button class="slide-btn prev" type="button" data-slide="-1">‹</button>
-          <button class="slide-btn next" type="button" data-slide="1">›</button>
+          <button class="slide-btn prev" type="button" data-slide="-1">&lsaquo;</button>
+          <button class="slide-btn next" type="button" data-slide="1">&rsaquo;</button>
           {% endif %}
+        {% elif product.image_url %}
+          <img class="slide active" src="{{ product.image_url }}" data-full-image="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy" decoding="async" data-zoom-image>
         {% else %}
         <div class="placeholder">{{ product.name[:1] }}</div>
         {% endif %}
@@ -51,13 +61,13 @@
         <strong>{{ product.name }}</strong>
         <div class="catalog-meta">
           <span>{{ product.preco_venda|money }}</span>
-          <small>Disponível: {{ stock_info.total }}</small>
+          <small>Dispon&iacute;vel: {{ stock_info.total }}</small>
         </div>
         <p>{{ product.category.name if product.category else 'Produto' }}</p>
         {% if product.descricao %}
         <p class="catalog-description">{{ product.descricao }}</p>
         {% endif %}
-        <label>Preferência
+        <label>Prefer&ecirc;ncia
           <input class="item-preference-input" placeholder="Cor, estampa, menino/menina">
         </label>
         <div class="cart-row">
@@ -81,9 +91,9 @@
 
   <aside class="catalog-cart">
     <h3>Carrinho</h3>
-    <p class="catalog-note">Se quiser uma cor, estampa ou sexo (menino/menina), informe no campo Preferência do produto antes de adicionar. Como temos muitas opções, quando não houver preferência podemos separar sortido conforme disponibilidade.</p>
+    <p class="catalog-note">Se quiser uma cor, estampa ou sexo (menino/menina), informe no campo Prefer&ecirc;ncia do produto antes de adicionar. Como temos muitas op&ccedil;&otilde;es, quando n&atilde;o houver prefer&ecirc;ncia podemos separar sortido conforme disponibilidade.</p>
     <div id="cartItems" class="cart-items"></div>
-    <label>Observação<textarea id="cartNote" rows="5" placeholder="Ex: prefiro menino, tons claros, estampas de bichinhos. Se não tiver, pode enviar sortido."></textarea></label>
+    <label>Observa&ccedil;&atilde;o<textarea id="cartNote" rows="5" placeholder="Ex: prefiro menino, tons claros, estampas de bichinhos. Se nao tiver, pode enviar sortido."></textarea></label>
     <strong id="cartTotal">Total: R$ 0,00</strong>
     <button id="sendWhatsApp" type="button">Enviar pedido por WhatsApp</button>
   </aside>
@@ -99,14 +109,20 @@
 
 <div class="image-zoom" id="imageZoom" hidden>
   <button class="image-zoom-close" id="imageZoomClose" type="button" aria-label="Fechar">X</button>
-  <button class="image-zoom-nav prev" id="imageZoomPrev" type="button" aria-label="Imagem anterior">‹</button>
+  <button class="image-zoom-nav prev" id="imageZoomPrev" type="button" aria-label="Imagem anterior">&lsaquo;</button>
   <img id="imageZoomImg" alt="">
-  <button class="image-zoom-nav next" id="imageZoomNext" type="button" aria-label="Próxima imagem">›</button>
+  <button class="image-zoom-nav next" id="imageZoomNext" type="button" aria-label="Proxima imagem">&rsaquo;</button>
 </div>
 
 <script>
   const cart = [];
   const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+  function ensureImageLoaded(image) {
+    if (image && !image.src && image.dataset.src) {
+      image.src = image.dataset.src;
+    }
+  }
 
   document.querySelectorAll(".catalog-card").forEach((card) => {
     const slides = Array.from(card.querySelectorAll(".slide"));
@@ -116,6 +132,7 @@
         if (!slides.length) return;
         slides[current].classList.remove("active");
         current = (current + Number(button.dataset.slide) + slides.length) % slides.length;
+        ensureImageLoaded(slides[current]);
         slides[current].classList.add("active");
       });
     });
@@ -147,10 +164,10 @@
       totalItems += item.quantity;
       const row = document.createElement("div");
       row.className = "cart-item";
-      row.innerHTML = `<div><strong>${item.product}</strong><span>${item.label} · ${item.quantity} un. · ${money.format(item.price * item.quantity)}</span></div><button type="button" data-index="${index}">Remover</button>`;
+      row.innerHTML = `<div><strong>${item.product}</strong><span>${item.label} &middot; ${item.quantity} un. &middot; ${money.format(item.price * item.quantity)}</span></div><button type="button" data-index="${index}">Remover</button>`;
       if (item.preference) {
         const preference = document.createElement("span");
-        preference.textContent = `Preferência: ${item.preference}`;
+        preference.textContent = `Prefer\u00eancia: ${item.preference}`;
         row.querySelector("div").appendChild(preference);
       }
       row.querySelector("button").addEventListener("click", () => {
@@ -169,25 +186,25 @@
     if (!cart.length) return;
     const whatsapp = document.querySelector(".catalog-layout").dataset.whatsapp;
     const note = document.getElementById("cartNote").value.trim();
-    const lines = ["Olá, gostaria dessas peças:", ""];
+    const lines = ["Ol\u00e1, gostaria dessas pe\u00e7as:", ""];
     const hasItemPreference = cart.some((item) => item.preference);
     cart.forEach((item) => {
       lines.push(`- ${item.product} (${item.label}) - ${item.quantity} un. - ${money.format(item.price * item.quantity)}`);
-      if (item.preference) lines.push(`  Preferência: ${item.preference}`);
+      if (item.preference) lines.push(`  Prefer\u00eancia: ${item.preference}`);
     });
     lines.push("", document.getElementById("cartTotal").textContent);
     if (!hasItemPreference) {
       lines.push(
         "",
-        "Preferência:",
-        "- Cor de preferência:",
-        "- Estampa de preferência:",
+        "Prefer\u00eancia:",
+        "- Cor de prefer\u00eancia:",
+        "- Estampa de prefer\u00eancia:",
         "- Menino ou menina:",
         "",
-        "Se não houver preferência, podemos separar sortido conforme disponibilidade."
+        "Se n\u00e3o houver prefer\u00eancia, podemos separar sortido conforme disponibilidade."
       );
     }
-    if (note) lines.push("", `Observação do cliente: ${note}`);
+    if (note) lines.push("", `Observa\u00e7\u00e3o do cliente: ${note}`);
     window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank");
   }
 
@@ -205,7 +222,8 @@
   function showZoomImage() {
     if (!zoomImages.length) return;
     const image = zoomImages[zoomIndex];
-    imageZoomImg.src = image.src;
+    ensureImageLoaded(image);
+    imageZoomImg.src = image.dataset.fullImage || image.src;
     imageZoomImg.alt = image.alt;
     const hasMultipleImages = zoomImages.length > 1;
     imageZoomPrev.hidden = !hasMultipleImages;
@@ -240,20 +258,12 @@
   imageZoomNext.addEventListener("click", () => moveZoomImage(1));
   imageZoomClose.addEventListener("click", closeImageZoom);
   imageZoom.addEventListener("click", (event) => {
-    if (event.target === imageZoom) {
-      closeImageZoom();
-    }
+    if (event.target === imageZoom) closeImageZoom();
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !imageZoom.hidden) {
-      closeImageZoom();
-    }
-    if (event.key === "ArrowLeft" && !imageZoom.hidden) {
-      moveZoomImage(-1);
-    }
-    if (event.key === "ArrowRight" && !imageZoom.hidden) {
-      moveZoomImage(1);
-    }
+    if (event.key === "Escape" && !imageZoom.hidden) closeImageZoom();
+    if (event.key === "ArrowLeft" && !imageZoom.hidden) moveZoomImage(-1);
+    if (event.key === "ArrowRight" && !imageZoom.hidden) moveZoomImage(1);
   });
 </script>
 {% endblock %}

@@ -1,7 +1,9 @@
+import os
 from decimal import Decimal
 
 from flask import url_for
 
+from config import Config
 from datetime_utils import now_brazil
 from extensions import db
 
@@ -155,6 +157,14 @@ class ProductImage(db.Model):
     def file_url(self):
         return url_for("static", filename=f"uploads/products/{self.filename}")
 
+    @property
+    def thumb_url(self):
+        stem = os.path.splitext(self.filename)[0]
+        thumb_filename = f"{stem}.webp"
+        thumb_path = os.path.join(Config.PRODUCT_THUMB_FOLDER, thumb_filename)
+        if os.path.exists(thumb_path):
+            return url_for("static", filename=f"uploads/products/thumbs/{thumb_filename}")
+        return self.file_url
 
 class ProductVariant(db.Model):
     id = db.Column(db.Integer, primary_key=True)

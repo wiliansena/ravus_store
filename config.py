@@ -18,5 +18,6 @@ class Config:
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
     TIMEZONE = os.getenv("TIMEZONE", "America/Sao_Paulo")
     UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads", "products")
+    PRODUCT_THUMB_FOLDER = os.path.join(UPLOAD_FOLDER, "thumbs")
     LOGO_UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads", "store")
     ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}

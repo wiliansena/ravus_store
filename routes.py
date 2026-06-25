@@ -5,6 +5,7 @@ from urllib.parse import quote_plus
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -93,7 +94,7 @@ def register_routes(app):
                         os.remove(old_path)
                 settings.logo_filename = logo
             db.session.commit()
-            flash("Configurações atualizadas.")
+            flash("Configuracoes atualizadas.")
             return redirect(url_for("store_settings"))
         return render_template("store_settings.html", settings=settings)
 
@@ -603,7 +604,14 @@ def register_routes(app):
         settings = get_store_settings()
         whatsapp = settings.whatsapp_number or app.config["WHATSAPP_NUMBER"]
         search = request.args.get("q", "").strip()
-        query = Product.query.filter_by(active=True)
+        query = Product.query.filter_by(active=True).options(
+            selectinload(Product.category),
+            selectinload(Product.images),
+            selectinload(Product.variants).selectinload(ProductVariant.color),
+            selectinload(Product.variants).selectinload(ProductVariant.size),
+            selectinload(Product.variants).selectinload(ProductVariant.stock_movements),
+            selectinload(Product.variants).selectinload(ProductVariant.sale_items),
+        )
         if search:
             query = query.filter(Product.name.ilike(f"%{search}%"))
         products = query.order_by(Product.name).all()
