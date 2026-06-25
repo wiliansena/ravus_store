@@ -215,7 +215,7 @@ sudo systemctl status ravus_store
 
 ## 14. Dominio com Nginx
 
-Se quiser acessar sem porta, exemplo `https://seudominio.com`, use Nginx como proxy.
+Se quiser acessar sem porta, exemplo `https://achadinhoskids.store`, use Nginx como proxy.
 
 Na VPS:
 
@@ -229,7 +229,7 @@ Conteudo:
 ```nginx
 server {
     listen 80;
-    server_name seudominio.com www.seudominio.com;
+    server_name achadinhoskids.store www.achadinhoskids.store;
 
     location /static/ {
         alias /var/www/ravus_store/static/;
@@ -256,7 +256,7 @@ sudo systemctl reload nginx
 Depois aponte o DNS do dominio para o IP da VPS e ative SSL:
 
 ```bash
-sudo certbot --nginx -d seudominio.com -d www.seudominio.com
+sudo certbot --nginx -d achadinhoskids.store -d www.achadinhoskids.store
 ```
 
 ## 15. Atualizar sistema futuramente
