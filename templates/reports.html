@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Relatorios</p>
+    <h2>Vendas e estoque</h2>
+  </div>
+</header>
+
+<form class="filters" method="get">
+  <label>Inicio<input name="start" type="date" value="{{ start or '' }}"></label>
+  <label>Fim<input name="end" type="date" value="{{ end or '' }}"></label>
+  <button>Filtrar</button>
+</form>
+
+<section class="metrics">
+  <article><span>Vendas no periodo</span><strong>{{ sales|length }}</strong></article>
+  <article><span>Total vendido</span><strong>{{ total|money }}</strong></article>
+  <article><span>Custo estimado</span><strong>{{ custo_total|money }}</strong></article>
+  <article><span>Lucro bruto</span><strong>{{ lucro_total|money }}</strong></article>
+  <article><span>Estoque baixo</span><strong>{{ low_stock|length }}</strong></article>
+</section>
+
+<section class="metrics">
+  <article><span>Peças em estoque</span><strong>{{ inventory_quantity }}</strong></article>
+  <article><span>Custo do estoque</span><strong>{{ inventory_cost_total|money }}</strong></article>
+  <article><span>Faturamento se vender tudo</span><strong>{{ inventory_revenue_total|money }}</strong></article>
+  <article><span>Lucro bruto potencial</span><strong>{{ inventory_potential_profit|money }}</strong></article>
+</section>
+
+<section class="grid two">
+  <section class="panel">
+    <h3>Produtos mais vendidos</h3>
+    <table>
+      <thead><tr><th>Produto</th><th>Qtd.</th></tr></thead>
+      <tbody>{% for name, qty in top_products %}<tr><td>{{ name }}</td><td>{{ qty }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+  <section class="panel">
+    <h3>Estoque baixo</h3>
+    <table>
+      <thead><tr><th>Produto</th><th>Saldo</th></tr></thead>
+      <tbody>{% for variant in low_stock %}<tr><td>{{ variant.label }}</td><td>{{ variant.stock }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </section>
+</section>
+{% endblock %}

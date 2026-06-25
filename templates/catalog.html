@@ -1,0 +1,259 @@
+{% extends "public_base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Catálogo Online</p>
+    <div class="catalog-brand">
+      {% if store_settings and store_settings.logo_url %}
+      <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}">
+      {% endif %}
+      <h2>{{ store_settings.store_name if store_settings else 'Catálogo' }}</h2>
+    </div>
+  </div>
+</header>
+
+<form class="catalog-search" method="get">
+  <input name="q" value="{{ search or '' }}" placeholder="Pesquisar produto">
+  <button>Pesquisar</button>
+  {% if search %}
+  <a class="button secondary" href="{{ url_for('catalog') }}">Limpar</a>
+  {% endif %}
+</form>
+
+<section class="catalog-layout" data-whatsapp="{{ whatsapp }}">
+  <section class="catalog-grid">
+    {% for product in products %}
+    <article class="catalog-card" data-product-id="{{ product.id }}">
+      {% set stock_info = namespace(total=0, first_variant=None) %}
+      {% for variant in product.variants %}
+        {% if variant.stock > 0 %}
+          {% set stock_info.total = stock_info.total + variant.stock %}
+          {% if not stock_info.first_variant %}
+            {% set stock_info.first_variant = variant %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      <div class="catalog-slider">
+        {% set images = product.catalog_images %}
+        {% if images %}
+          {% for image in images %}
+          <img class="slide {{ 'active' if loop.first else '' }}" src="{{ image }}" alt="{{ product.name }}" data-zoom-image>
+          {% endfor %}
+          {% if images|length > 1 %}
+          <button class="slide-btn prev" type="button" data-slide="-1">‹</button>
+          <button class="slide-btn next" type="button" data-slide="1">›</button>
+          {% endif %}
+        {% else %}
+        <div class="placeholder">{{ product.name[:1] }}</div>
+        {% endif %}
+      </div>
+      <div class="catalog-info">
+        <strong>{{ product.name }}</strong>
+        <div class="catalog-meta">
+          <span>{{ product.preco_venda|money }}</span>
+          <small>Disponível: {{ stock_info.total }}</small>
+        </div>
+        <p>{{ product.category.name if product.category else 'Produto' }}</p>
+        {% if product.descricao %}
+        <p class="catalog-description">{{ product.descricao }}</p>
+        {% endif %}
+        <label>Preferência
+          <input class="item-preference-input" placeholder="Cor, estampa, menino/menina">
+        </label>
+        <div class="cart-row">
+          <input class="quantity-input" type="number" min="1" value="1">
+          <button
+            type="button"
+            class="add-cart-button"
+            data-product="{{ product.name }}"
+            data-price="{{ product.preco_venda }}"
+            data-variant-id="{{ stock_info.first_variant.id if stock_info.first_variant else '' }}"
+            data-label="{{ stock_info.first_variant.label if stock_info.first_variant else product.name }}"
+            {% if not stock_info.first_variant %}disabled{% endif %}
+          >Adicionar</button>
+        </div>
+      </div>
+    </article>
+    {% else %}
+    <p>{{ 'Nenhum produto encontrado.' if search else 'Nenhum produto ativo.' }}</p>
+    {% endfor %}
+  </section>
+
+  <aside class="catalog-cart">
+    <h3>Carrinho</h3>
+    <p class="catalog-note">Se quiser uma cor, estampa ou sexo (menino/menina), informe no campo Preferência do produto antes de adicionar. Como temos muitas opções, quando não houver preferência podemos separar sortido conforme disponibilidade.</p>
+    <div id="cartItems" class="cart-items"></div>
+    <label>Observação<textarea id="cartNote" rows="5" placeholder="Ex: prefiro menino, tons claros, estampas de bichinhos. Se não tiver, pode enviar sortido."></textarea></label>
+    <strong id="cartTotal">Total: R$ 0,00</strong>
+    <button id="sendWhatsApp" type="button">Enviar pedido por WhatsApp</button>
+  </aside>
+</section>
+
+<div class="floating-cart">
+  <div>
+    <strong id="floatingCartCount">0 itens</strong>
+    <span id="floatingCartTotal">Total: R$ 0,00</span>
+  </div>
+  <button id="floatingSendWhatsApp" type="button" disabled>Enviar pedido</button>
+</div>
+
+<div class="image-zoom" id="imageZoom" hidden>
+  <button class="image-zoom-close" id="imageZoomClose" type="button" aria-label="Fechar">X</button>
+  <button class="image-zoom-nav prev" id="imageZoomPrev" type="button" aria-label="Imagem anterior">‹</button>
+  <img id="imageZoomImg" alt="">
+  <button class="image-zoom-nav next" id="imageZoomNext" type="button" aria-label="Próxima imagem">›</button>
+</div>
+
+<script>
+  const cart = [];
+  const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+  document.querySelectorAll(".catalog-card").forEach((card) => {
+    const slides = Array.from(card.querySelectorAll(".slide"));
+    let current = 0;
+    card.querySelectorAll("[data-slide]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!slides.length) return;
+        slides[current].classList.remove("active");
+        current = (current + Number(button.dataset.slide) + slides.length) % slides.length;
+        slides[current].classList.add("active");
+      });
+    });
+
+    card.querySelector(".add-cart-button").addEventListener("click", () => {
+      const button = card.querySelector(".add-cart-button");
+      if (!button.dataset.variantId) return;
+      const quantity = Number(card.querySelector(".quantity-input").value || 1);
+      const preference = card.querySelector(".item-preference-input").value.trim();
+      cart.push({
+        variantId: button.dataset.variantId,
+        label: button.dataset.label,
+        product: button.dataset.product,
+        quantity,
+        price: Number(button.dataset.price),
+        preference,
+      });
+      renderCart();
+    });
+  });
+
+  function renderCart() {
+    const container = document.getElementById("cartItems");
+    container.innerHTML = "";
+    let total = 0;
+    let totalItems = 0;
+    cart.forEach((item, index) => {
+      total += item.price * item.quantity;
+      totalItems += item.quantity;
+      const row = document.createElement("div");
+      row.className = "cart-item";
+      row.innerHTML = `<div><strong>${item.product}</strong><span>${item.label} · ${item.quantity} un. · ${money.format(item.price * item.quantity)}</span></div><button type="button" data-index="${index}">Remover</button>`;
+      if (item.preference) {
+        const preference = document.createElement("span");
+        preference.textContent = `Preferência: ${item.preference}`;
+        row.querySelector("div").appendChild(preference);
+      }
+      row.querySelector("button").addEventListener("click", () => {
+        cart.splice(index, 1);
+        renderCart();
+      });
+      container.appendChild(row);
+    });
+    document.getElementById("cartTotal").textContent = `Total: ${money.format(total)}`;
+    document.getElementById("floatingCartCount").textContent = `${totalItems} ${totalItems === 1 ? "item" : "itens"}`;
+    document.getElementById("floatingCartTotal").textContent = `Total: ${money.format(total)}`;
+    document.getElementById("floatingSendWhatsApp").disabled = cart.length === 0;
+  }
+
+  function sendWhatsAppOrder() {
+    if (!cart.length) return;
+    const whatsapp = document.querySelector(".catalog-layout").dataset.whatsapp;
+    const note = document.getElementById("cartNote").value.trim();
+    const lines = ["Olá, gostaria dessas peças:", ""];
+    const hasItemPreference = cart.some((item) => item.preference);
+    cart.forEach((item) => {
+      lines.push(`- ${item.product} (${item.label}) - ${item.quantity} un. - ${money.format(item.price * item.quantity)}`);
+      if (item.preference) lines.push(`  Preferência: ${item.preference}`);
+    });
+    lines.push("", document.getElementById("cartTotal").textContent);
+    if (!hasItemPreference) {
+      lines.push(
+        "",
+        "Preferência:",
+        "- Cor de preferência:",
+        "- Estampa de preferência:",
+        "- Menino ou menina:",
+        "",
+        "Se não houver preferência, podemos separar sortido conforme disponibilidade."
+      );
+    }
+    if (note) lines.push("", `Observação do cliente: ${note}`);
+    window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank");
+  }
+
+  document.getElementById("sendWhatsApp").addEventListener("click", sendWhatsAppOrder);
+  document.getElementById("floatingSendWhatsApp").addEventListener("click", sendWhatsAppOrder);
+
+  const imageZoom = document.getElementById("imageZoom");
+  const imageZoomImg = document.getElementById("imageZoomImg");
+  const imageZoomClose = document.getElementById("imageZoomClose");
+  const imageZoomPrev = document.getElementById("imageZoomPrev");
+  const imageZoomNext = document.getElementById("imageZoomNext");
+  let zoomImages = [];
+  let zoomIndex = 0;
+
+  function showZoomImage() {
+    if (!zoomImages.length) return;
+    const image = zoomImages[zoomIndex];
+    imageZoomImg.src = image.src;
+    imageZoomImg.alt = image.alt;
+    const hasMultipleImages = zoomImages.length > 1;
+    imageZoomPrev.hidden = !hasMultipleImages;
+    imageZoomNext.hidden = !hasMultipleImages;
+  }
+
+  function moveZoomImage(step) {
+    if (!zoomImages.length) return;
+    zoomIndex = (zoomIndex + step + zoomImages.length) % zoomImages.length;
+    showZoomImage();
+  }
+
+  document.querySelectorAll("[data-zoom-image]").forEach((image, index) => {
+    image.addEventListener("click", () => {
+      const card = image.closest(".catalog-card");
+      zoomImages = Array.from(card.querySelectorAll("[data-zoom-image]"));
+      zoomIndex = zoomImages.indexOf(image);
+      if (zoomIndex < 0) zoomIndex = index;
+      showZoomImage();
+      imageZoom.hidden = false;
+    });
+  });
+
+  function closeImageZoom() {
+    imageZoom.hidden = true;
+    imageZoomImg.src = "";
+    zoomImages = [];
+    zoomIndex = 0;
+  }
+
+  imageZoomPrev.addEventListener("click", () => moveZoomImage(-1));
+  imageZoomNext.addEventListener("click", () => moveZoomImage(1));
+  imageZoomClose.addEventListener("click", closeImageZoom);
+  imageZoom.addEventListener("click", (event) => {
+    if (event.target === imageZoom) {
+      closeImageZoom();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !imageZoom.hidden) {
+      closeImageZoom();
+    }
+    if (event.key === "ArrowLeft" && !imageZoom.hidden) {
+      moveZoomImage(-1);
+    }
+    if (event.key === "ArrowRight" && !imageZoom.hidden) {
+      moveZoomImage(1);
+    }
+  });
+</script>
+{% endblock %}

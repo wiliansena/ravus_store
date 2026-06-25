@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+migrations/__pycache__/
+migrations/versions/__pycache__/
+static/uploads/
+.agents/
+.codex/
+*.dump
+*.backup
+*.sql
+*.zip

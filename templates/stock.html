@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Estoque</p>
+    <h2>Entradas e ajustes</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('stock_movements') }}">Movimentações</a>
+</header>
+
+<section class="grid two">
+  <form class="panel" method="post">
+    <h3>Movimentar estoque</h3>
+    <label>Produto / variacao
+      <select name="variant_id" required>
+        {% for variant in variants %}
+        <option value="{{ variant.id }}">{{ variant.label }} - saldo {{ variant.stock }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Tipo
+      <select name="movement_type">
+        <option value="entrada">Entrada manual</option>
+        <option value="ajuste">Ajuste para saldo final</option>
+      </select>
+    </label>
+    <label>Quantidade<input name="quantity" type="number" required></label>
+    <label>Preco de custo unitario<input name="preco_custo" type="text" inputmode="decimal" placeholder="0,00" value="0,00"></label>
+    <label>Observacao<input name="note"></label>
+    <button>Atualizar</button>
+  </form>
+
+  <section class="panel">
+    <h3>Saldos</h3>
+    <table>
+      <thead><tr><th>Produto</th><th>Saldo</th><th>Minimo</th></tr></thead>
+      <tbody>
+        {% for variant in variants %}
+        <tr><td>{{ variant.label }}</td><td>{{ variant.stock }}</td><td>{{ variant.min_stock }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</section>
+{% endblock %}

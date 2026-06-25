@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Acesso</p>
+    <h2>{{ 'Editar usuário' if user else 'Novo usuário' }}</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('users') }}">Voltar</a>
+</header>
+
+<section class="grid two">
+  <form class="panel" method="post">
+    <h3>Dados do usuário</h3>
+    <label>Nome<input name="name" value="{{ user.name if user else '' }}" placeholder="Ex: Ana Souza" required></label>
+    <label>E-mail<input name="email" type="email" value="{{ user.email if user else '' }}" placeholder="ana@loja.com" required></label>
+    {% if not user %}
+    <label>Senha<input name="password" type="password" placeholder="Senha inicial" required></label>
+    {% endif %}
+    <label>Perfil
+      <select name="role_id">
+        <option value="">Sem perfil</option>
+        {% for role in roles %}
+        <option value="{{ role.id }}" {% if user and user.role_id == role.id %}selected{% endif %}>{{ role.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="check"><input name="active" type="checkbox" {% if not user or user.active %}checked{% endif %}> Usuário ativo</label>
+    <button>{{ 'Salvar alterações' if user else 'Salvar usuário' }}</button>
+  </form>
+
+  {% if user %}
+  <form class="panel" method="post" action="{{ url_for('reset_user_password', user_id=user.id) }}">
+    <h3>Resetar senha</h3>
+    <label>Nova senha<input name="new_password" type="password" minlength="6" placeholder="Mínimo 6 caracteres" required></label>
+    <button>Resetar senha</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

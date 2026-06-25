@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ store_settings.store_name if store_settings else 'Ravus Store' }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <aside>
+    <a class="brand" href="{{ url_for('dashboard') }}">
+      {% if store_settings and store_settings.logo_url %}
+      <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}">
+      {% endif %}
+      <span>{{ store_settings.store_name if store_settings else 'Ravus Store' }}</span>
+    </a>
+    <div class="user-box">
+      <strong>{{ current_user.name }}</strong>
+      <span>{{ current_user.role.name if current_user.role else 'Sem perfil' }}</span>
+    </div>
+    <nav>
+      <a href="{{ url_for('dashboard') }}">Início</a>
+      <a href="{{ url_for('products') }}">Produtos</a>
+      <a href="{{ url_for('stock') }}">Estoque</a>
+      <a href="{{ url_for('sales') }}">Vendas</a>
+      <a href="{{ url_for('catalog') }}">Catálogo</a>
+      <a href="{{ url_for('reports') }}">Relatórios</a>
+      <a href="{{ url_for('users') }}">Usuários</a>
+      <a href="{{ url_for('roles') }}">Perfis</a>
+      <a href="{{ url_for('permissions') }}">Permissões</a>
+      <a href="{{ url_for('simple_registry', kind='categorias') }}">Cadastros</a>
+      <a href="{{ url_for('store_settings') }}">Configurações</a>
+      <a href="{{ url_for('logout') }}">Sair</a>
+    </nav>
+  </aside>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% set category, message = messages[0] %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Produtos</p>
+    <h2>Imagens de {{ product.name }}</h2>
+  </div>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('edit_product', product_id=product.id) }}">Editar produto</a>
+    <a class="button secondary" href="{{ url_for('products') }}">Voltar</a>
+  </div>
+</header>
+
+<section class="grid two">
+  <form class="panel" method="post" enctype="multipart/form-data">
+    <h3>Adicionar imagens</h3>
+    <label>Selecione do computador<input class="image-input" name="images" type="file" accept="image/png,image/jpeg" multiple required></label>
+    <input name="primary_upload_index" class="primary-upload-index" type="hidden" value="0">
+    <div class="image-preview-grid"></div>
+    <button>Enviar imagens</button>
+  </form>
+
+  <section class="panel">
+    <h3>Imagens cadastradas</h3>
+    <div class="product-images-admin large">
+      {% for image in product.ordered_images %}
+      <figure class="{{ 'primary-image' if image.is_primary else '' }}">
+        <img src="{{ image.file_url }}" alt="{{ product.name }}">
+        {% if image.is_primary %}<figcaption>Principal</figcaption>{% endif %}
+        {% if not image.is_primary %}
+        <form method="post" action="{{ url_for('set_primary_product_image', image_id=image.id) }}">
+          <button class="mini-button edit-button">Principal</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('delete_product_image', image_id=image.id) }}">
+          <button class="danger-button">Remover</button>
+        </form>
+      </figure>
+      {% else %}
+      <p>Nenhuma imagem cadastrada.</p>
+      {% endfor %}
+    </div>
+  </section>
+</section>
+
+<script>
+  document.querySelectorAll(".image-input").forEach((input) => {
+    const form = input.closest("form");
+    const previewGrid = form.querySelector(".image-preview-grid");
+    const primaryInput = form.querySelector(".primary-upload-index");
+    if (!previewGrid || !primaryInput) return;
+
+    input.addEventListener("change", () => {
+      previewGrid.innerHTML = "";
+      Array.from(input.files).forEach((file, index) => {
+        const option = document.createElement("label");
+        option.className = "image-preview-option";
+        option.innerHTML = `
+          <img alt="">
+          <span><input type="radio" name="primary_upload_preview" value="${index}" ${index === 0 ? "checked" : ""}> Principal</span>
+        `;
+        option.querySelector("img").src = URL.createObjectURL(file);
+        option.querySelector("input").addEventListener("change", () => {
+          primaryInput.value = String(index);
+        });
+        previewGrid.appendChild(option);
+      });
+      primaryInput.value = "0";
+    });
+  });
+</script>
+{% endblock %}

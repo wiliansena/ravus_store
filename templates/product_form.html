@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Produtos</p>
+    <h2>{{ 'Editar produto' if product else 'Novo produto' }}</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('products') }}">Voltar</a>
+</header>
+
+<section class="grid two">
+  <form class="panel" method="post" enctype="multipart/form-data">
+    <h3>Dados do produto</h3>
+    <label>{{ form.name.label.text }}{{ form.name(required=true) }}</label>
+    <label>{{ form.sku.label.text }}{{ form.sku() }}</label>
+    <label>{{ form.descricao.label.text }}{{ form.descricao(rows=4, placeholder='Detalhes que aparecem no catalogo publico') }}</label>
+    <label>{{ form.preco_venda.label.text }}{{ form.preco_venda(type='text', inputmode='decimal', placeholder='0,00', required=true) }}</label>
+    <label>{{ form.images.label.text }}{{ form.images(accept='image/png,image/jpeg', multiple=true, class_='image-input') }}</label>
+    <input name="primary_upload_index" class="primary-upload-index" type="hidden" value="0">
+    <div class="image-preview-grid"></div>
+    <div class="row">
+      <label>{{ form.category_id.label.text }}{{ form.category_id() }}</label>
+      <label>{{ form.brand_id.label.text }}{{ form.brand_id() }}</label>
+    </div>
+    <label>{{ form.supplier_id.label.text }}{{ form.supplier_id() }}</label>
+    {% if product %}
+    <label class="check">{{ form.active() }} {{ form.active.label.text }}</label>
+    {% else %}
+    <div class="row">
+      <label>{{ form.color_id.label.text }}{{ form.color_id() }}</label>
+      <label>{{ form.size_id.label.text }}{{ form.size_id() }}</label>
+      <label>{{ form.min_stock.label.text }}{{ form.min_stock(type='number', min='0') }}</label>
+    </div>
+    {% endif %}
+    <button>{{ 'Salvar alterações' if product else 'Salvar produto' }}</button>
+  </form>
+
+  {% if product %}
+  <section class="panel">
+    <h3>Variações e imagens</h3>
+    <form method="post" action="{{ url_for('add_variant', product_id=product.id) }}" class="inline-form">
+      <select name="color_id"><option value="">Cor</option>{% for c in colors %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
+      <select name="size_id"><option value="">Tam.</option>{% for s in sizes %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select>
+      <input name="min_stock" type="number" min="0" value="1">
+      <button>Adicionar</button>
+    </form>
+    <ul>
+      {% for variant in product.variants %}
+      <li>{{ variant.label }}: {{ variant.stock }} un.</li>
+      {% else %}
+      <li>Nenhuma variação cadastrada.</li>
+      {% endfor %}
+    </ul>
+
+    <div class="product-images-admin">
+      {% for image in product.ordered_images %}
+      <figure class="{{ 'primary-image' if image.is_primary else '' }}">
+        <img src="{{ image.file_url }}" alt="{{ product.name }}">
+        {% if image.is_primary %}<figcaption>Principal</figcaption>{% endif %}
+      </figure>
+      {% else %}
+      <p>Nenhuma imagem cadastrada.</p>
+      {% endfor %}
+    </div>
+    <a class="button secondary" href="{{ url_for('product_images', product_id=product.id) }}">Gerenciar imagens</a>
+  </section>
+  {% endif %}
+</section>
+
+<script>
+  document.querySelectorAll(".image-input").forEach((input) => {
+    const form = input.closest("form");
+    const previewGrid = form.querySelector(".image-preview-grid");
+    const primaryInput = form.querySelector(".primary-upload-index");
+    if (!previewGrid || !primaryInput) return;
+
+    input.addEventListener("change", () => {
+      previewGrid.innerHTML = "";
+      Array.from(input.files).forEach((file, index) => {
+        const option = document.createElement("label");
+        option.className = "image-preview-option";
+        option.innerHTML = `
+          <img alt="">
+          <span><input type="radio" name="primary_upload_preview" value="${index}" ${index === 0 ? "checked" : ""}> Principal</span>
+        `;
+        option.querySelector("img").src = URL.createObjectURL(file);
+        option.querySelector("input").addEventListener("change", () => {
+          primaryInput.value = String(index);
+        });
+        previewGrid.appendChild(option);
+      });
+      primaryInput.value = "0";
+    });
+  });
+</script>
+{% endblock %}

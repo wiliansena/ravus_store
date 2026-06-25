@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar - Ravus Store</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-panel">
+      <div>
+        <p class="eyebrow">Ravus Store</p>
+        <h1>Entrar no sistema</h1>
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% set category, message = messages[0] %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endif %}
+      {% endwith %}
+      <form method="post">
+        <label>E-mail<input name="email" type="email" placeholder="admin@ravus.local" required autofocus></label>
+        <label>Senha<input name="password" type="password" placeholder="Sua senha" required></label>
+        <button>Entrar</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

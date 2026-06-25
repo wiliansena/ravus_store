@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Cadastros</p>
+    <h2>{{ meta.title }}</h2>
+  </div>
+  <div class="actions">
+    <a class="button" href="{{ url_for('new_registry_item', kind=kind) }}">Novo {{ meta.singular }}</a>
+  </div>
+</header>
+
+<div class="registry-links">
+  {% for slug, item in registries.items() %}
+    <a class="{{ 'active' if slug == kind else '' }}" href="{{ url_for('simple_registry', kind=slug) }}">{{ item.title }}</a>
+  {% endfor %}
+</div>
+
+<section class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        {% if kind in ['fornecedores', 'clientes'] %}<th>Telefone</th>{% endif %}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        {% if kind in ['fornecedores', 'clientes'] %}<td>{{ item.phone or '-' }}</td>{% endif %}
+        <td class="actions">
+          <a class="mini-button edit-button" href="{{ url_for('edit_registry_item', kind=kind, item_id=item.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('delete_registry_item', kind=kind, item_id=item.id) }}">
+            <button class="danger-button" onclick="return confirm('Excluir este cadastro?')">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="{{ 3 if kind in ['fornecedores', 'clientes'] else 2 }}">Nenhum cadastro ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% set pagination_endpoint = 'simple_registry' %}
+  {% set pagination_args = {'kind': kind} %}
+  {% include "_pagination.html" %}
+</section>
+{% endblock %}

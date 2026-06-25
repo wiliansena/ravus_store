@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Cadastros</p>
+    <h2>Produtos</h2>
+  </div>
+  <a class="button" href="{{ url_for('new_product') }}">Novo produto</a>
+</header>
+
+<form class="panel search-bar" method="get">
+  <label>Pesquisar produto
+    <input name="q" value="{{ search or '' }}" placeholder="Nome do produto">
+  </label>
+  <button>Pesquisar</button>
+  {% if search %}
+  <a class="button secondary" href="{{ url_for('products') }}">Limpar</a>
+  {% endif %}
+</form>
+
+<section class="panel">
+  <table>
+    <thead><tr><th>Foto</th><th>Produto</th><th>SKU</th><th>Preco venda</th><th>Categoria</th><th>Imagens</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for product in products %}
+      <tr>
+        <td>
+          {% if product.primary_image %}
+          <img class="product-thumb" src="{{ product.primary_image.file_url }}" alt="{{ product.name }}">
+          {% else %}
+          <div class="product-thumb placeholder-thumb">{{ product.name[:1] }}</div>
+          {% endif %}
+        </td>
+        <td>{{ product.name }}</td>
+        <td>{{ product.sku or '-' }}</td>
+        <td>{{ product.preco_venda|money }}</td>
+        <td>{{ product.category.name if product.category else '-' }}</td>
+        <td>{{ product.images|length }}</td>
+        <td>{{ 'Ativo' if product.active else 'Inativo' }}</td>
+        <td class="actions">
+          <a class="mini-button edit-button" href="{{ url_for('edit_product', product_id=product.id) }}">Editar</a>
+          <a class="mini-button" href="{{ url_for('product_images', product_id=product.id) }}">Imagens</a>
+          <form method="post" action="{{ url_for('delete_product', product_id=product.id) }}">
+            <button class="danger-button">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8">{{ 'Nenhum produto encontrado.' if search else 'Nenhum produto ainda.' }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set pagination_endpoint = 'products' %}
+  {% set pagination_args = {'q': search} if search else {} %}
+  {% include "_pagination.html" %}
+</section>
+{% endblock %}

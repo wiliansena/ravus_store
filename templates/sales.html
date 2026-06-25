@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Vendas</p>
+    <h2>Venda balcão</h2>
+  </div>
+</header>
+
+<section class="grid two">
+  <form class="panel" method="post">
+    <h3>Nova venda</h3>
+    <label>Cliente
+      <select name="client_id"><option value="">Balcão</option>{% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select>
+    </label>
+    <div id="sale-items" class="sale-items">
+      <div class="sale-row">
+        <label>Item
+          <select name="variant_id" required>
+            <option value="">Selecione</option>
+            {% for variant in variants %}
+            <option value="{{ variant.id }}">{{ variant.label }} - {{ variant.product.preco_venda|money }} - saldo {{ variant.stock }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Qtd.<input name="quantity" type="number" min="1" value="1" required></label>
+        <button class="danger-button remove-sale-item" type="button">Remover</button>
+      </div>
+    </div>
+    <button class="button" id="add-sale-item" type="button">Adicionar item</button>
+
+    <template id="sale-item-template">
+      <div class="sale-row">
+        <label>Item
+        <select name="variant_id">
+          <option value="">Selecione</option>
+          {% for variant in variants %}
+          <option value="{{ variant.id }}">{{ variant.label }} - {{ variant.product.preco_venda|money }} - saldo {{ variant.stock }}</option>
+          {% endfor %}
+        </select>
+      </label>
+        <label>Qtd.<input name="quantity" type="number" min="1" value="1"></label>
+        <button class="danger-button remove-sale-item" type="button">Remover</button>
+      </div>
+    </template>
+
+    <div class="row">
+      <label>Desconto<input name="discount" type="text" inputmode="decimal" placeholder="0,00" value="0,00"></label>
+      <label>Pagamento
+        <select name="payment_method" required>
+          <option>Dinheiro</option>
+          <option>Pix</option>
+          <option>Cartão débito</option>
+          <option>Cartão crédito</option>
+        </select>
+      </label>
+    </div>
+    <button>Fechar venda</button>
+  </form>
+
+  <section class="panel">
+    <h3>Últimas vendas</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th></th></tr></thead>
+      <tbody>
+        {% for sale in sales %}
+        <tr>
+          <td>{{ sale.created_at|datetime_br('%d/%m %H:%M') }}</td>
+          <td>{{ sale.client.name if sale.client else 'Balcão' }}</td>
+          <td>{{ sale.total|money }}</td>
+          <td><a href="{{ url_for('receipt', sale_id=sale.id) }}">recibo</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</section>
+
+<script>
+  const saleItems = document.getElementById("sale-items");
+  const saleItemTemplate = document.getElementById("sale-item-template");
+  const addSaleItem = document.getElementById("add-sale-item");
+
+  function updateSaleItemButtons() {
+    const rows = saleItems.querySelectorAll(".sale-row");
+    rows.forEach((row) => {
+      const button = row.querySelector(".remove-sale-item");
+      button.disabled = rows.length === 1;
+    });
+  }
+
+  addSaleItem.addEventListener("click", () => {
+    saleItems.appendChild(saleItemTemplate.content.cloneNode(true));
+    updateSaleItemButtons();
+  });
+
+  saleItems.addEventListener("click", (event) => {
+    if (!event.target.classList.contains("remove-sale-item")) {
+      return;
+    }
+    event.target.closest(".sale-row").remove();
+    updateSaleItemButtons();
+  });
+
+  updateSaleItemButtons();
+</script>
+{% endblock %}

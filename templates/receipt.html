@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="receipt">
+  <h2>Ravus Store</h2>
+  <p>Recibo #{{ sale.id }} · {{ sale.created_at|datetime_br }}</p>
+  <p>Cliente: {{ sale.client.name if sale.client else 'Balcão' }}</p>
+  <table>
+    <thead><tr><th>Item</th><th>Qtd.</th><th>Unit.</th><th>Total</th></tr></thead>
+    <tbody>
+      {% for item in sale.items %}
+      <tr><td>{{ item.variant.label }}</td><td>{{ item.quantity }}</td><td>{{ item.preco_venda_unitario|money }}</td><td>{{ item.total|money }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p>Subtotal: {{ sale.subtotal|money }}</p>
+  <p>Desconto: {{ sale.discount|money }}</p>
+  <strong>Total: {{ sale.total|money }}</strong>
+  <div class="actions"><a class="button" href="{{ url_for('sales') }}">Nova venda</a><button onclick="window.print()">Imprimir</button></div>
+</section>
+{% endblock %}

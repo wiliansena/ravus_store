@@ -1,0 +1,11 @@
+{% if pagination and pagination.pages > 1 %}
+<nav class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for(pagination_endpoint, page=pagination.prev_num, **(pagination_args or {})) }}">Anterior</a>
+  {% endif %}
+  <span>Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for(pagination_endpoint, page=pagination.next_num, **(pagination_args or {})) }}">Proxima</a>
+  {% endif %}
+</nav>
+{% endif %}

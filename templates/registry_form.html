@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Cadastros</p>
+    <h2>{{ 'Editar' if item else 'Novo' }} {{ meta.singular }}</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('simple_registry', kind=kind) }}">Voltar</a>
+</header>
+
+<form class="panel form-narrow" method="post">
+  <label>Nome do {{ meta.singular }}
+    <input name="name" value="{{ item.name if item else '' }}" placeholder="{{ meta.placeholder }}" required>
+  </label>
+  {% if kind in ['fornecedores', 'clientes'] %}
+  <label>Telefone
+    <input name="phone" value="{{ item.phone if item else '' }}" placeholder="Ex: (11) 99999-9999">
+  </label>
+  {% endif %}
+  <button>Salvar {{ meta.singular }}</button>
+</form>
+{% endblock %}

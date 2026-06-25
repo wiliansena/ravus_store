@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Acesso</p>
+    <h2>{{ 'Editar permissão' if permission else 'Nova permissão' }}</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('permissions') }}">Voltar</a>
+</header>
+
+<form class="panel form-narrow" method="post">
+  <h3>Dados da permissão</h3>
+  <label>Nome<input name="name" value="{{ permission.name if permission else '' }}" placeholder="Ex: caixa, compras, financeiro" required></label>
+  <label>Descrição<input name="description" value="{{ permission.description if permission else '' }}" placeholder="O que essa permissão libera"></label>
+  <button>{{ 'Salvar alterações' if permission else 'Salvar permissão' }}</button>
+</form>
+{% endblock %}

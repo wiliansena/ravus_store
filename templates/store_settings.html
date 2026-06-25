@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Sistema</p>
+    <h2>Configurações da loja</h2>
+  </div>
+</header>
+
+<section class="grid two">
+  <form class="panel" method="post" enctype="multipart/form-data">
+    <h3>Identidade</h3>
+    <label>Nome da loja
+      <input name="store_name" value="{{ settings.store_name }}" required>
+    </label>
+    <label>WhatsApp
+      <input name="whatsapp_number" value="{{ settings.whatsapp_number or '' }}" placeholder="Ex: 5562999999999">
+    </label>
+    <label>Logo
+      <input name="logo" type="file" accept="image/png,image/jpeg">
+    </label>
+    <button>Salvar configurações</button>
+  </form>
+
+  <section class="panel">
+    <h3>Prévia</h3>
+    <div class="store-preview">
+      {% if settings.logo_url %}
+      <img src="{{ settings.logo_url }}" alt="{{ settings.store_name }}">
+      {% else %}
+      <div class="store-preview-placeholder">{{ settings.store_name[:1] }}</div>
+      {% endif %}
+      <strong>{{ settings.store_name }}</strong>
+      <span>{{ settings.whatsapp_number or 'WhatsApp não informado' }}</span>
+    </div>
+  </section>
+</section>
+{% endblock %}

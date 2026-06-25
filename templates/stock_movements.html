@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Estoque</p>
+    <h2>Movimentações</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('stock') }}">Voltar</a>
+</header>
+
+<section class="panel">
+  <table>
+    <thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Qtd.</th><th>Custo un.</th><th>Obs.</th></tr></thead>
+    <tbody>
+      {% for movement in movements %}
+      <tr>
+        <td>{{ movement.created_at|datetime_br }}</td>
+        <td>{{ movement.variant.label }}</td>
+        <td>{{ movement.movement_type }}</td>
+        <td>{{ movement.quantity }}</td>
+        <td>{{ movement.preco_custo|money if movement.preco_custo is not none else '-' }}</td>
+        <td>{{ movement.note }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">Nenhuma movimentação ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set pagination_endpoint = 'stock_movements' %}
+  {% set pagination_args = {} %}
+  {% include "_pagination.html" %}
+</section>
+{% endblock %}

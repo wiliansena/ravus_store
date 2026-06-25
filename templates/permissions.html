@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Acesso</p>
+    <h2>Permissões</h2>
+  </div>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('users') }}">Usuários</a>
+    <a class="button secondary" href="{{ url_for('roles') }}">Perfis</a>
+    <a class="button" href="{{ url_for('new_permission') }}">Nova permissão</a>
+  </div>
+</header>
+
+<section class="panel">
+  <table>
+    <thead><tr><th>Permissão</th><th>Descrição</th><th></th></tr></thead>
+    <tbody>
+      {% for permission in permissions %}
+      <tr>
+        <td>{{ permission.name }}</td>
+        <td>{{ permission.description or '-' }}</td>
+        <td class="actions">
+          <a class="mini-button edit-button" href="{{ url_for('edit_permission', permission_id=permission.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('delete_permission', permission_id=permission.id) }}">
+            <button class="danger-button" onclick="return confirm('Excluir esta permissao?')">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3">Nenhuma permissão ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set pagination_endpoint = 'permissions' %}
+  {% set pagination_args = {} %}
+  {% include "_pagination.html" %}
+</section>
+{% endblock %}

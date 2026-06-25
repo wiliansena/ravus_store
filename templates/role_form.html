@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Acesso</p>
+    <h2>{{ 'Editar perfil' if role else 'Novo perfil' }}</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('roles') }}">Voltar</a>
+</header>
+
+<form class="panel form-narrow" method="post">
+  <h3>Dados do perfil</h3>
+  <label>Nome do perfil<input name="name" value="{{ role.name if role else '' }}" placeholder="Ex: Vendedor, Estoque, Admin" required></label>
+  <div class="permission-list">
+    {% for permission in permissions %}
+    <label class="check">
+      <input name="permission_ids" type="checkbox" value="{{ permission.id }}" {% if role and permission in role.permissions %}checked{% endif %}>
+      {{ permission.name }}
+    </label>
+    {% else %}
+    <p>Cadastre permissões antes de criar perfis.</p>
+    {% endfor %}
+  </div>
+  <button>{{ 'Salvar alterações' if role else 'Salvar perfil' }}</button>
+</form>
+{% endblock %}
