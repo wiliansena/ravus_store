@@ -3,32 +3,32 @@
 <header class="page-header">
   <div>
     <p class="eyebrow">Controle da loja</p>
-    <div class="dashboard-brand">
+    <a class="dashboard-brand brand-link" href="{{ url_for('dashboard') }}">
       {% if store_settings and store_settings.logo_url %}
       <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}">
       {% endif %}
       <h2>{{ store_settings.store_name if store_settings else 'Resumo de hoje' }}</h2>
-    </div>
+    </a>
   </div>
   <a class="button" href="{{ url_for('sales') }}">Nova venda</a>
 </header>
 
 <section class="metrics">
   <article><span>Produtos</span><strong>{{ product_count }}</strong></article>
-  <article><span>Peças em estoque</span><strong>{{ stock_total }}</strong></article>
-  <article><span>Vendas no mês</span><strong>{{ sales_total|money }}</strong></article>
+  <article><span>PeÃƒÆ’Ã‚Â§as em estoque</span><strong>{{ stock_total }}</strong></article>
+  <article><span>Vendas no mÃƒÆ’Ã‚Âªs</span><strong>{{ sales_total|money }}</strong></article>
   <article><span>Estoque baixo</span><strong>{{ low_stock|length }}</strong></article>
 </section>
 
 <section class="panel">
   <h3>Itens com estoque baixo</h3>
   <table>
-    <thead><tr><th>Produto</th><th>Saldo</th><th>Mínimo</th></tr></thead>
+    <thead><tr><th>Produto</th><th>Saldo</th><th>MÃƒÆ’Ã‚Â­nimo</th></tr></thead>
     <tbody>
       {% for variant in low_stock %}
       <tr><td>{{ variant.label }}</td><td>{{ variant.stock }}</td><td>{{ variant.min_stock }}</td></tr>
       {% else %}
-      <tr><td colspan="3">Nenhum item crítico.</td></tr>
+      <tr><td colspan="3">Nenhum item crÃƒÆ’Ã‚Â­tico.</td></tr>
       {% endfor %}
     </tbody>
   </table>
