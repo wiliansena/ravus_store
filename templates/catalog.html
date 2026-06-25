@@ -48,6 +48,7 @@
             class="slide {{ 'active' if loop.first else '' }}"
             src="{{ image.thumb_url }}"
             data-full-image="{{ image.file_url }}"
+            data-thumb-image="{{ image.thumb_url }}"
             alt="{{ product.name }}"
             loading="{{ 'eager' if loop.first and product_index < 4 else 'lazy' }}"
             decoding="async"
@@ -58,7 +59,7 @@
           <button class="slide-btn next" type="button" data-slide="1">&rsaquo;</button>
           {% endif %}
         {% elif product.image_url %}
-          <img class="slide active" src="{{ product.image_url }}" data-full-image="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy" decoding="async" data-zoom-image>
+          <img class="slide active" src="{{ product.image_url }}" data-full-image="{{ product.image_url }}" data-thumb-image="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy" decoding="async" data-zoom-image>
         {% else %}
         <div class="placeholder">{{ product.name[:1] }}</div>
         {% endif %}
@@ -129,7 +130,34 @@
     }
   }
 
+
+  function preloadCardThumbnails(card) {
+    card.querySelectorAll("[data-zoom-image]").forEach((image) => {
+      ensureImageLoaded(image);
+      const thumb = image.dataset.thumbImage || image.src;
+      if (thumb) {
+        const preload = new Image();
+        preload.src = thumb;
+      }
+    });
+  }
+
+  const cardPreloader = "IntersectionObserver" in window
+    ? new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          preloadCardThumbnails(entry.target);
+          observer.unobserve(entry.target);
+        });
+      }, { rootMargin: "500px 0px" })
+    : null;
+
   document.querySelectorAll(".catalog-card").forEach((card) => {
+    if (cardPreloader) {
+      cardPreloader.observe(card);
+    } else {
+      preloadCardThumbnails(card);
+    }
     const slides = Array.from(card.querySelectorAll(".slide"));
     let current = 0;
     card.querySelectorAll("[data-slide]").forEach((button) => {
@@ -228,8 +256,18 @@
     if (!zoomImages.length) return;
     const image = zoomImages[zoomIndex];
     ensureImageLoaded(image);
-    imageZoomImg.src = image.dataset.fullImage || image.src;
+    imageZoomImg.src = image.dataset.thumbImage || image.src;
     imageZoomImg.alt = image.alt;
+    const fullImage = image.dataset.fullImage;
+    if (fullImage && fullImage !== imageZoomImg.src) {
+      const loader = new Image();
+      loader.onload = () => {
+        if (!imageZoom.hidden && zoomImages[zoomIndex] === image) {
+          imageZoomImg.src = fullImage;
+        }
+      };
+      loader.src = fullImage;
+    }
     const hasMultipleImages = zoomImages.length > 1;
     imageZoomPrev.hidden = !hasMultipleImages;
     imageZoomNext.hidden = !hasMultipleImages;
