@@ -32,12 +32,12 @@
       <label>{{ form.min_stock.label.text }}{{ form.min_stock(type='number', min='0') }}</label>
     </div>
     {% endif %}
-    <button>{{ 'Salvar altera&ccedil;&otilde;es' if product else 'Salvar produto' }}</button>
+    <button>{{ 'Salvar alterações' if product else 'Salvar produto' }}</button>
   </form>
 
   {% if product %}
   <section class="panel">
-    <h3>Varia&ccedil;&otilde;es</h3>
+    <h3>Variaçoes</h3>
     <form method="post" action="{{ url_for('add_variant', product_id=product.id) }}" class="inline-form">
       <select name="color_id"><option value="">Cor</option>{% for c in colors %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
       <select name="size_id"><option value="">Tam.</option>{% for s in sizes %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select>
@@ -66,7 +66,7 @@
         </form>
       </div>
       {% else %}
-      <p>Nenhuma varia&ccedil;&atilde;o cadastrada.</p>
+      <p>Nenhuma variação cadastrada.</p>
       {% endfor %}
     </div>
   </section>
