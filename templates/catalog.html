@@ -3,12 +3,12 @@
 <header class="page-header">
   <div>
     <p class="eyebrow">Cat&aacute;logo Online</p>
-    <a class="catalog-brand brand-link" href="{{ url_for('catalog') }}">
+    <div class="catalog-brand">
       {% if store_settings and store_settings.logo_url %}
       <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}" loading="eager" decoding="async">
       {% endif %}
       <h2>{{ store_settings.store_name if store_settings else 'Cat&aacute;logo' }}</h2>
-    </a>
+    </div>
   </div>
 </header>
 
