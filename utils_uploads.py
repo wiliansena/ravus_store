@@ -65,3 +65,19 @@ def salvar_upload_logo(arquivo):
     filename = f"logo-{uuid.uuid4().hex}.{extension}"
     arquivo.save(os.path.join(current_app.config["LOGO_UPLOAD_FOLDER"], filename))
     return filename
+
+
+def copiar_imagem_produto(filename):
+    source_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+    if not filename or not os.path.exists(source_path):
+        return None
+
+    extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else "jpg"
+    new_filename = f"{uuid.uuid4().hex}.{extension}"
+    target_path = os.path.join(current_app.config["UPLOAD_FOLDER"], new_filename)
+
+    with open(source_path, "rb") as source, open(target_path, "wb") as target:
+        target.write(source.read())
+
+    gerar_thumbnail_produto(new_filename)
+    return new_filename

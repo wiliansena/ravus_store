@@ -40,7 +40,7 @@ from services import (
     save_product_images,
     seed_data,
 )
-from utils_uploads import salvar_upload_logo
+from utils_uploads import copiar_imagem_produto, salvar_upload_logo
 
 
 def register_routes(app):
@@ -420,6 +420,57 @@ def register_routes(app):
             flash("Produto atualizado.")
             return redirect(url_for("products"))
         return render_template("product_form.html", **context)
+
+    @app.route("/produtos/<int:product_id>/copiar", methods=["POST"])
+    @permission_required("produtos")
+    def duplicate_product(product_id):
+        product = db.get_or_404(Product, product_id)
+        base_name = f"{product.name} - copia"
+        copy_name = base_name
+        counter = 2
+        while Product.query.filter_by(name=copy_name).first():
+            copy_name = f"{base_name} {counter}"
+            counter += 1
+
+        duplicated = Product(
+            name=copy_name,
+            sku=None,
+            descricao=product.descricao,
+            preco_venda=product.preco_venda,
+            image_url=product.image_url,
+            active=False,
+            category_id=product.category_id,
+            brand_id=product.brand_id,
+            supplier_id=product.supplier_id,
+        )
+        db.session.add(duplicated)
+        db.session.flush()
+
+        for variant in product.variants:
+            db.session.add(
+                ProductVariant(
+                    product_id=duplicated.id,
+                    color_id=variant.color_id,
+                    size_id=variant.size_id,
+                    min_stock=variant.min_stock,
+                )
+            )
+
+        for image in product.ordered_images:
+            copied_filename = copiar_imagem_produto(image.filename)
+            if copied_filename:
+                db.session.add(
+                    ProductImage(
+                        product_id=duplicated.id,
+                        filename=copied_filename,
+                        position=image.position,
+                        is_primary=image.is_primary,
+                    )
+                )
+
+        db.session.commit()
+        flash("Produto copiado. Revise nome, SKU, preco e ative no catalogo.")
+        return redirect(url_for("edit_product", product_id=duplicated.id))
 
     @app.route("/produtos/<int:product_id>/excluir", methods=["POST"])
     @permission_required("produtos")

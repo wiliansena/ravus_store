@@ -979,3 +979,12 @@ th {
     grid-template-columns: 1fr;
   }
 }
+.copy-button {
+  background: white;
+  border-color: #b7d6ee;
+  color: #246b94;
+}
+
+.copy-button:hover {
+  background: #eef7ff;
+}
