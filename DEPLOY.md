@@ -169,13 +169,13 @@ Na VPS, dentro do venv:
 ```bash
 cd /var/www/ravus_store
 source venv/bin/activate
-waitress-serve --host=0.0.0.0 --port=8001 wsgi:app
+waitress-serve --host=0.0.0.0 --port=5052 wsgi:app
 ```
 
 Acesse:
 
 ```text
-http://IP_DA_VPS:8001
+http://IP_DA_VPS:5052
 ```
 
 ## 13. Criar servico systemd
@@ -197,7 +197,7 @@ After=network.target
 User=wilian
 WorkingDirectory=/var/www/ravus_store
 EnvironmentFile=/var/www/ravus_store/.env
-ExecStart=/var/www/ravus_store/venv/bin/waitress-serve --host=0.0.0.0 --port=8001 wsgi:app
+ExecStart=/var/www/ravus_store/venv/bin/waitress-serve --host=0.0.0.0 --port=5052 wsgi:app
 Restart=always
 
 [Install]
@@ -236,7 +236,7 @@ server {
     }
 
     location / {
-        proxy_pass http://127.0.0.1:8001;
+        proxy_pass http://127.0.0.1:5052;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
