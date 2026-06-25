@@ -387,6 +387,7 @@ def register_routes(app):
                 brand_id=form.brand_id.data or None,
                 supplier_id=form.supplier_id.data or None,
                 active=True,
+                featured=form.featured.data,
             )
             db.session.add(product)
             db.session.flush()
@@ -420,6 +421,7 @@ def register_routes(app):
             product.descricao = (form.descricao.data or "").strip()
             product.preco_venda = parse_decimal_br(form.preco_venda.data)
             product.active = form.active.data
+            product.featured = form.featured.data
             product.category_id = form.category_id.data or None
             product.brand_id = form.brand_id.data or None
             product.supplier_id = form.supplier_id.data or None
@@ -447,6 +449,7 @@ def register_routes(app):
             preco_venda=product.preco_venda,
             image_url=product.image_url,
             active=False,
+            featured=False,
             category_id=product.category_id,
             brand_id=product.brand_id,
             supplier_id=product.supplier_id,
@@ -687,7 +690,7 @@ def register_routes(app):
         settings = get_store_settings()
         whatsapp = settings.whatsapp_number or app.config["WHATSAPP_NUMBER"]
         search = request.args.get("q", "").strip()
-        query = Product.query.filter_by(active=True).options(
+        product_options = (
             selectinload(Product.category),
             selectinload(Product.images),
             selectinload(Product.variants).selectinload(ProductVariant.color),
@@ -695,10 +698,15 @@ def register_routes(app):
             selectinload(Product.variants).selectinload(ProductVariant.stock_movements),
             selectinload(Product.variants).selectinload(ProductVariant.sale_items),
         )
+        query = Product.query.filter_by(active=True).options(*product_options)
+        featured_products = []
         if search:
             query = query.filter(Product.name.ilike(f"%{search}%"))
-        products = query.order_by(Product.name).all()
-        return render_template("catalog.html", products=products, whatsapp=whatsapp, quote_plus=quote_plus, search=search, settings=settings)
+            products = query.order_by(Product.name).all()
+        else:
+            featured_products = query.filter_by(featured=True).order_by(Product.name).all()
+            products = query.filter_by(featured=False).order_by(Product.name).all()
+        return render_template("catalog.html", products=products, featured_products=featured_products, whatsapp=whatsapp, quote_plus=quote_plus, search=search, settings=settings)
 
     @app.route("/relatorios")
     @permission_required("relatorios")

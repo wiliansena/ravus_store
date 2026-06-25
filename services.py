@@ -155,6 +155,7 @@ def product_form_context(product=None):
         form.brand_id.data = product.brand_id or 0
         form.supplier_id.data = product.supplier_id or 0
         form.active.data = product.active
+        form.featured.data = product.featured
     return {
         "product": product,
         "form": form,

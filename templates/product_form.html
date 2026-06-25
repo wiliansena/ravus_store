@@ -23,6 +23,7 @@
       <label>{{ form.brand_id.label.text }}{{ form.brand_id() }}</label>
     </div>
     <label>{{ form.supplier_id.label.text }}{{ form.supplier_id() }}</label>
+    <label class="check">{{ form.featured() }} {{ form.featured.label.text }}</label>
     {% if product %}
     <label class="check">{{ form.active() }} {{ form.active.label.text }}</label>
     {% else %}

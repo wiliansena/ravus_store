@@ -543,6 +543,25 @@ th {
   grid-template-columns: minmax(0, 1fr) 320px;
 }
 
+.catalog-products-area,
+.catalog-section {
+  min-width: 0;
+}
+
+.catalog-products-area {
+  display: grid;
+  gap: 20px;
+}
+
+.catalog-section-title {
+  color: #223126;
+  font-size: 20px;
+  margin: 0 0 10px;
+}
+
+.catalog-featured .catalog-section-title {
+  color: var(--accent);
+}
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -900,6 +919,7 @@ th {
   .page-header { align-items: flex-start; flex-direction: column; }
   .inline-form, .upload-inline-form, .filters, .search-bar, .catalog-search, .row, .sale-row { grid-template-columns: 1fr; }
 }
+
 
 @media (max-width: 520px) {
   body.public-page main { padding: 14px 10px 96px; }

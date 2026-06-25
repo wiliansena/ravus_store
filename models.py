@@ -120,6 +120,7 @@ class Product(db.Model):
     preco_venda = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     image_url = db.Column(db.String(400), default="")
     active = db.Column(db.Boolean, default=True)
+    featured = db.Column(db.Boolean, nullable=False, default=False)
     category_id = db.Column(db.Integer, db.ForeignKey("category.id"))
     brand_id = db.Column(db.Integer, db.ForeignKey("brand.id"))
     supplier_id = db.Column(db.Integer, db.ForeignKey("supplier.id"))

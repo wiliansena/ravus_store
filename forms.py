@@ -18,6 +18,7 @@ class ProductForm(FlaskForm):
     size_id = SelectField("Tamanho", coerce=int, validators=[Optional()], validate_choice=False)
     min_stock = StringField("Minimo", default="1", validators=[Optional()])
     active = BooleanField("Produto ativo no catalogo", default=True)
+    featured = BooleanField("Produto em destaque no catalogo", default=False)
     images = MultipleFileField("Imagens")
     submit = SubmitField("Salvar")
 

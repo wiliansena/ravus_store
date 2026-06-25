@@ -1,0 +1,60 @@
+    <article class="catalog-card" data-product-id="{{ product.id }}">
+      {% set stock_info = namespace(total=0, first_variant=None) %}
+      {% for variant in product.variants %}
+        {% if variant.stock > 0 %}
+          {% set stock_info.total = stock_info.total + variant.stock %}
+          {% if not stock_info.first_variant %}
+            {% set stock_info.first_variant = variant %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      <div class="catalog-slider">
+        {% set images = product.ordered_images %}
+        {% if images %}
+          {% for image in images %}
+          <img
+            class="slide {{ 'active' if loop.first else '' }}"
+            src="{{ image.thumb_url }}"
+            data-full-image="{{ image.file_url }}"
+            data-thumb-image="{{ image.thumb_url }}"
+            alt="{{ product.name }}"
+            loading="{{ 'eager' if loop.first and product_index < 4 else 'lazy' }}"
+            decoding="async"
+            data-zoom-image>
+          {% endfor %}
+          {% if images|length > 1 %}
+          <button class="slide-btn prev" type="button" data-slide="-1">&lsaquo;</button>
+          <button class="slide-btn next" type="button" data-slide="1">&rsaquo;</button>
+          {% endif %}
+        {% elif product.image_url %}
+          <img class="slide active" src="{{ product.image_url }}" data-full-image="{{ product.image_url }}" data-thumb-image="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy" decoding="async" data-zoom-image>
+        {% else %}
+        <div class="placeholder">{{ product.name[:1] }}</div>
+        {% endif %}
+      </div>
+      <div class="catalog-info">
+        <strong>{{ product.name }}</strong>
+        <div class="catalog-meta">
+          <span>{{ product.preco_venda|money }}</span>
+        </div>
+        <p>{{ product.category.name if product.category else 'Produto' }}</p>
+        {% if product.descricao %}
+        <p class="catalog-description">{{ product.descricao }}</p>
+        {% endif %}
+        <label>Prefer&ecirc;ncia
+          <input class="item-preference-input" placeholder="Cor, estampa, menino/menina">
+        </label>
+        <div class="cart-row">
+          <input class="quantity-input" type="number" min="1" value="1">
+          <button
+            type="button"
+            class="add-cart-button"
+            data-product="{{ product.name }}"
+            data-price="{{ product.preco_venda }}"
+            data-variant-id="{{ stock_info.first_variant.id if stock_info.first_variant else '' }}"
+            data-label="{{ stock_info.first_variant.label if stock_info.first_variant else product.name }}"
+            {% if not stock_info.first_variant %}disabled{% endif %}
+          >Adicionar</button>
+        </div>
+      </div>
+    </article>
