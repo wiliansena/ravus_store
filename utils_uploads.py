@@ -81,3 +81,22 @@ def copiar_imagem_produto(filename):
 
     gerar_thumbnail_produto(new_filename)
     return new_filename
+
+def salvar_upload_banner(arquivo):
+    if not arquivo or not arquivo.filename:
+        return None
+    if not extensao_permitida(arquivo.filename):
+        return None
+
+    os.makedirs(current_app.config["LOGO_UPLOAD_FOLDER"], exist_ok=True)
+    filename = f"banner-{uuid.uuid4().hex}.webp"
+    target_path = os.path.join(current_app.config["LOGO_UPLOAD_FOLDER"], filename)
+
+    with Image.open(arquivo) as image:
+        image = ImageOps.exif_transpose(image)
+        if image.mode not in ("RGB", "RGBA"):
+            image = image.convert("RGB")
+        image.thumbnail((1600, 480), Image.Resampling.LANCZOS)
+        image.save(target_path, "WEBP", quality=82, method=6)
+
+    return filename

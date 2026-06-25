@@ -1,17 +1,22 @@
 {% extends "public_base.html" %}
 {% block content %}
-<header class="page-header">
-  <div>
+<section class="catalog-intro">
+  <div class="catalog-intro-text">
     <p class="eyebrow">Cat&aacute;logo Online</p>
-    <div class="catalog-brand">
-      {% if store_settings and store_settings.logo_url %}
-      <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}" loading="eager" decoding="async">
-      {% endif %}
-      <h2>{{ store_settings.store_name if store_settings else 'Cat&aacute;logo' }}</h2>
-    </div>
+    <h2>{{ store_settings.store_name if store_settings else 'Cat&aacute;logo' }}</h2>
+    {% if store_settings and store_settings.store_description %}
+    <p>{{ store_settings.store_description }}</p>
+    {% else %}
+    <p>Escolha suas pe&ccedil;as favoritas e envie o pedido pelo WhatsApp.</p>
+    {% endif %}
   </div>
-</header>
+</section>
 
+{% if store_settings and store_settings.banner_url %}
+<section class="catalog-hero">
+  <img src="{{ store_settings.banner_url }}" alt="{{ store_settings.store_name }}" loading="eager" decoding="async">
+</section>
+{% endif %}
 <form class="catalog-search" method="get">
   <input name="q" value="{{ search or '' }}" placeholder="Pesquisar produto">
   <button>Pesquisar</button>

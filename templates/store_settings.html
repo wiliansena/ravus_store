@@ -3,7 +3,7 @@
 <header class="page-header">
   <div>
     <p class="eyebrow">Sistema</p>
-    <h2>Configurações da loja</h2>
+    <h2>Configura&ccedil;&otilde;es da loja</h2>
   </div>
 </header>
 
@@ -16,14 +16,21 @@
     <label>WhatsApp
       <input name="whatsapp_number" value="{{ settings.whatsapp_number or '' }}" placeholder="Ex: 5562999999999">
     </label>
+    <label>Descri&ccedil;&atilde;o do cat&aacute;logo
+      <textarea name="store_description" rows="4" placeholder="Ex: Moda infantil com pe&ccedil;as confort&aacute;veis, estilosas e novidades toda semana.">{{ settings.store_description or '' }}</textarea>
+    </label>
     <label>Logo
       <input name="logo" type="file" accept="image/png,image/jpeg">
     </label>
-    <button>Salvar configurações</button>
+    <label>Banner do cat&aacute;logo
+      <input name="banner" type="file" accept="image/png,image/jpeg">
+      <span class="field-hint">Recomendado: 1200x360 px. O sistema otimiza para WebP ao salvar.</span>
+    </label>
+    <button>Salvar configura&ccedil;&otilde;es</button>
   </form>
 
   <section class="panel">
-    <h3>Prévia</h3>
+    <h3>Pr&eacute;via</h3>
     <div class="store-preview">
       {% if settings.logo_url %}
       <img src="{{ settings.logo_url }}" alt="{{ settings.store_name }}">
@@ -31,7 +38,13 @@
       <div class="store-preview-placeholder">{{ settings.store_name[:1] }}</div>
       {% endif %}
       <strong>{{ settings.store_name }}</strong>
-      <span>{{ settings.whatsapp_number or 'WhatsApp não informado' }}</span>
+      <span>{{ settings.whatsapp_number or 'WhatsApp nao informado' }}</span>
+      {% if settings.store_description %}<p>{{ settings.store_description }}</p>{% endif %}
+      {% if settings.banner_url %}
+      <div class="store-banner-preview">
+        <img src="{{ settings.banner_url }}" alt="Banner do catalogo">
+      </div>
+      {% endif %}
     </div>
   </section>
 </section>

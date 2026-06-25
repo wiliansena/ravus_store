@@ -95,13 +95,21 @@ class StoreSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     store_name = db.Column(db.String(120), nullable=False, default="Ravus Store")
     whatsapp_number = db.Column(db.String(30), default="")
+    store_description = db.Column(db.Text, default="")
     logo_filename = db.Column(db.String(255), default="")
+    banner_filename = db.Column(db.String(255), default="")
 
     @property
     def logo_url(self):
         if not self.logo_filename:
             return ""
         return url_for("static", filename=f"uploads/store/{self.logo_filename}")
+
+    @property
+    def banner_url(self):
+        if not self.banner_filename:
+            return ""
+        return url_for("static", filename=f"uploads/store/{self.banner_filename}")
 
 
 class Product(db.Model):

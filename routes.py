@@ -40,7 +40,7 @@ from services import (
     save_product_images,
     seed_data,
 )
-from utils_uploads import copiar_imagem_produto, salvar_upload_logo
+from utils_uploads import copiar_imagem_produto, salvar_upload_banner, salvar_upload_logo
 
 
 def register_routes(app):
@@ -86,6 +86,7 @@ def register_routes(app):
         if request.method == "POST":
             settings.store_name = request.form["store_name"].strip() or "Ravus Store"
             settings.whatsapp_number = request.form.get("whatsapp_number", "").strip()
+            settings.store_description = request.form.get("store_description", "").strip()
             logo = salvar_upload_logo(request.files.get("logo"))
             if logo:
                 if settings.logo_filename:
@@ -93,6 +94,13 @@ def register_routes(app):
                     if os.path.exists(old_path):
                         os.remove(old_path)
                 settings.logo_filename = logo
+            banner = salvar_upload_banner(request.files.get("banner"))
+            if banner:
+                if settings.banner_filename:
+                    old_path = os.path.join(Config.LOGO_UPLOAD_FOLDER, settings.banner_filename)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                settings.banner_filename = banner
             db.session.commit()
             flash("Configuracoes atualizadas.")
             return redirect(url_for("store_settings"))
