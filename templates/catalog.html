@@ -46,7 +46,7 @@
           {% for image in images %}
           <img
             class="slide {{ 'active' if loop.first else '' }}"
-            {% if loop.first %}src="{{ image.thumb_url }}"{% else %}data-src="{{ image.thumb_url }}"{% endif %}
+            src="{{ image.thumb_url }}"
             data-full-image="{{ image.file_url }}"
             alt="{{ product.name }}"
             loading="{{ 'eager' if loop.first and product_index < 4 else 'lazy' }}"
