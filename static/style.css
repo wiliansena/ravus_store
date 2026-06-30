@@ -1028,7 +1028,7 @@ th {
   object-fit: cover;
   width: 100%;
 }
-`r`n
+
 .field-hint {
   color: var(--muted);
   display: block;
@@ -1163,4 +1163,18 @@ th {
 
 .select2-container--default .select2-selection--single .select2-selection__arrow {
   height: 38px;
+}
+.stock-layout {
+  align-items: start;
+}
+
+.stock-form {
+  align-content: start;
+  align-self: start;
+}
+
+@media (min-width: 861px) {
+  .stock-layout {
+    grid-template-columns: minmax(320px, 460px) minmax(420px, 1fr);
+  }
 }
