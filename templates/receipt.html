@@ -4,6 +4,13 @@
   <h2>Ravus Store</h2>
   <p>Recibo #{{ sale.id }} · {{ sale.created_at|datetime_br }}</p>
   <p>Cliente: {{ sale.client.name if sale.client else 'Balcão' }}</p>
+  {% if sale.is_canceled %}
+  <div class="flash error">
+    Venda cancelada{% if sale.canceled_at %} em {{ sale.canceled_at|datetime_br }}{% endif %}.
+    {% if sale.cancel_reason %}<br>Motivo: {{ sale.cancel_reason }}{% endif %}
+    {% if sale.canceled_by %}<br>Cancelada por: {{ sale.canceled_by.name }}{% endif %}
+  </div>
+  {% endif %}
   <table>
     <thead><tr><th>Item</th><th>Qtd.</th><th>Unit.</th><th>Total</th></tr></thead>
     <tbody>
@@ -15,6 +22,12 @@
   <p>Subtotal: {{ sale.subtotal|money }}</p>
   <p>Desconto: {{ sale.discount|money }}</p>
   <strong>Total: {{ sale.total|money }}</strong>
+  {% if not sale.is_canceled %}
+  <form class="panel cancel-receipt-form" method="post" action="{{ url_for('cancel_sale', sale_id=sale.id) }}" onsubmit="return confirm('Cancelar esta venda e devolver os itens ao estoque?')">
+    <label>Motivo do cancelamento<textarea name="cancel_reason" rows="3" placeholder="Ex: venda feita errada, cliente desistiu..."></textarea></label>
+    <button class="danger-button" type="submit">Cancelar venda e devolver estoque</button>
+  </form>
+  {% endif %}
   <div class="actions"><a class="button" href="{{ url_for('sales') }}">Nova venda</a><button onclick="window.print()">Imprimir</button></div>
 </section>
 {% endblock %}

@@ -198,7 +198,7 @@ class ProductVariant(db.Model):
     @property
     def stock(self):
         total = sum(m.quantity for m in self.stock_movements)
-        sold = sum(item.quantity for item in self.sale_items)
+        sold = sum(item.quantity for item in self.sale_items if not item.sale.is_canceled)
         return total - sold
 
 
@@ -218,9 +218,18 @@ class Sale(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey("client.id"))
     discount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     payment_method = db.Column(db.String(40), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="ativa")
+    canceled_at = db.Column(db.DateTime, nullable=True)
+    cancel_reason = db.Column(db.String(300), default="")
+    canceled_by_id = db.Column(db.Integer, db.ForeignKey("app_user.id"), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=now_brazil)
     client = db.relationship("Client")
+    canceled_by = db.relationship("User", foreign_keys=[canceled_by_id])
     items = db.relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
+
+    @property
+    def is_canceled(self):
+        return self.status == "cancelada"
 
     @property
     def subtotal(self):

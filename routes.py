@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import Config
-from datetime_utils import today_brazil
+from datetime_utils import now_brazil, today_brazil
 from extensions import db
 from models import (
     Brand,
@@ -69,7 +69,7 @@ def register_routes(app):
     @login_required
     def dashboard():
         today = today_brazil()
-        month_sales = Sale.query.filter(func.date(Sale.created_at) >= today.replace(day=1)).all()
+        month_sales = Sale.query.filter(Sale.status != "cancelada", func.date(Sale.created_at) >= today.replace(day=1)).all()
         low_stock = [v for v in ProductVariant.query.all() if v.stock <= v.min_stock]
         return render_template(
             "dashboard.html",
@@ -685,6 +685,21 @@ def register_routes(app):
     def receipt(sale_id):
         return render_template("receipt.html", sale=db.get_or_404(Sale, sale_id))
 
+    @app.route("/vendas/<int:sale_id>/cancelar", methods=["POST"])
+    @permission_required("vendas")
+    def cancel_sale(sale_id):
+        sale = db.get_or_404(Sale, sale_id)
+        if sale.is_canceled:
+            flash("Venda ja estava cancelada.", "error")
+            return redirect(url_for("receipt", sale_id=sale.id))
+        sale.status = "cancelada"
+        sale.canceled_at = now_brazil()
+        sale.cancel_reason = request.form.get("cancel_reason", "").strip()
+        sale.canceled_by_id = current_user.id if current_user.is_authenticated else None
+        db.session.commit()
+        flash("Venda cancelada. Os itens voltaram ao estoque.")
+        return redirect(url_for("receipt", sale_id=sale.id))
+
     @app.route("/catalogo")
     def catalog():
         settings = get_store_settings()
@@ -713,7 +728,7 @@ def register_routes(app):
     def reports():
         start = request.args.get("start")
         end = request.args.get("end")
-        query = Sale.query
+        query = Sale.query.filter(Sale.status != "cancelada")
         if start:
             query = query.filter(func.date(Sale.created_at) >= datetime.strptime(start, "%Y-%m-%d").date())
         if end:
@@ -721,8 +736,10 @@ def register_routes(app):
         sales_list = query.order_by(Sale.created_at.desc()).all()
         top_products = (
             db.session.query(Product.name, func.sum(SaleItem.quantity).label("qty"))
+            .join(Sale, SaleItem.sale_id == Sale.id)
             .join(ProductVariant, SaleItem.variant_id == ProductVariant.id)
             .join(Product, ProductVariant.product_id == Product.id)
+            .filter(Sale.status != "cancelada")
             .group_by(Product.name)
             .order_by(func.sum(SaleItem.quantity).desc())
             .limit(10)

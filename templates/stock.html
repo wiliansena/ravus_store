@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% block head_extra %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -12,7 +15,7 @@
   <form class="panel" method="post">
     <h3>Movimentar estoque</h3>
     <label>Produto / variacao
-      <select name="variant_id" required>
+      <select name="variant_id" class="product-select" data-placeholder="Pesquisar produto" required>
         {% for variant in variants %}
         <option value="{{ variant.id }}">{{ variant.label }} - saldo {{ variant.stock }}</option>
         {% endfor %}
@@ -42,4 +45,20 @@
     </table>
   </section>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  jQuery(function () {
+    jQuery(".product-select").select2({
+      placeholder: "Pesquisar produto",
+      width: "100%",
+      language: {
+        noResults: () => "Nenhum produto encontrado"
+      }
+    });
+  });
+</script>
 {% endblock %}

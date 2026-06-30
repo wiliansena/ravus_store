@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% block head_extra %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -16,7 +19,7 @@
     <div id="sale-items" class="sale-items">
       <div class="sale-row">
         <label>Item
-          <select name="variant_id" required>
+          <select name="variant_id" class="product-select" data-placeholder="Pesquisar produto" required>
             <option value="">Selecione</option>
             {% for variant in variants %}
             <option value="{{ variant.id }}">{{ variant.label }} - {{ variant.product.preco_venda|money }} - saldo {{ variant.stock }}</option>
@@ -32,7 +35,7 @@
     <template id="sale-item-template">
       <div class="sale-row">
         <label>Item
-        <select name="variant_id">
+        <select name="variant_id" class="product-select" data-placeholder="Pesquisar produto">
           <option value="">Selecione</option>
           {% for variant in variants %}
           <option value="{{ variant.id }}">{{ variant.label }} - {{ variant.product.preco_venda|money }} - saldo {{ variant.stock }}</option>
@@ -61,14 +64,23 @@
   <section class="panel">
     <h3>Últimas vendas</h3>
     <table>
-      <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th></th></tr></thead>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Status</th><th></th></tr></thead>
       <tbody>
         {% for sale in sales %}
         <tr>
           <td>{{ sale.created_at|datetime_br('%d/%m %H:%M') }}</td>
           <td>{{ sale.client.name if sale.client else 'Balcão' }}</td>
           <td>{{ sale.total|money }}</td>
-          <td><a href="{{ url_for('receipt', sale_id=sale.id) }}">recibo</a></td>
+          <td><span class="status-badge {{ 'status-canceled' if sale.is_canceled else 'status-active' }}">{{ 'Cancelada' if sale.is_canceled else 'Ativa' }}</span></td>
+          <td class="actions">
+            <a href="{{ url_for('receipt', sale_id=sale.id) }}">recibo</a>
+            {% if not sale.is_canceled %}
+            <form method="post" action="{{ url_for('cancel_sale', sale_id=sale.id) }}" class="cancel-sale-form">
+              <input type="hidden" name="cancel_reason">
+              <button class="danger-button" type="submit">Cancelar</button>
+            </form>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -76,6 +88,12 @@
   </section>
 </section>
 
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
   const saleItems = document.getElementById("sale-items");
   const saleItemTemplate = document.getElementById("sale-item-template");
@@ -89,11 +107,40 @@
     });
   }
 
+  function initProductSelects(scope = document) {
+    if (!window.jQuery || !jQuery.fn.select2) return;
+    jQuery(scope).find(".product-select").each(function () {
+      if (jQuery(this).hasClass("select2-hidden-accessible")) return;
+      jQuery(this).select2({
+        placeholder: this.dataset.placeholder || "Pesquisar produto",
+        allowClear: true,
+        width: "100%",
+        language: {
+          noResults: () => "Nenhum produto encontrado"
+        }
+      });
+    });
+  }
+
   addSaleItem.addEventListener("click", () => {
-    saleItems.appendChild(saleItemTemplate.content.cloneNode(true));
+    const fragment = saleItemTemplate.content.cloneNode(true);
+    const row = fragment.querySelector(".sale-row");
+    saleItems.appendChild(fragment);
+    initProductSelects(row);
     updateSaleItemButtons();
   });
 
+
+  document.querySelectorAll(".cancel-sale-form").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      const reason = window.prompt("Motivo do cancelamento (opcional):", "");
+      if (reason === null) {
+        event.preventDefault();
+        return;
+      }
+      form.querySelector("input[name='cancel_reason']").value = reason.trim();
+    });
+  });
   saleItems.addEventListener("click", (event) => {
     if (!event.target.classList.contains("remove-sale-item")) {
       return;
@@ -102,6 +149,7 @@
     updateSaleItemButtons();
   });
 
+  initProductSelects();
   updateSaleItemButtons();
 </script>
 {% endblock %}
