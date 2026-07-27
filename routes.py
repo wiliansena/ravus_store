@@ -17,6 +17,7 @@ from models import (
     Category,
     Client,
     Color,
+    Expense,
     Permission,
     Product,
     ProductImage,
@@ -700,6 +701,64 @@ def register_routes(app):
         flash("Venda cancelada. Os itens voltaram ao estoque.")
         return redirect(url_for("receipt", sale_id=sale.id))
 
+    @app.route("/gastos")
+    @permission_required("relatorios")
+    def expenses():
+        page = request.args.get("page", 1, type=int)
+        start = request.args.get("start")
+        end = request.args.get("end")
+        category = request.args.get("category", "").strip()
+        query = Expense.query
+        if start:
+            query = query.filter(Expense.expense_date >= datetime.strptime(start, "%Y-%m-%d").date())
+        if end:
+            query = query.filter(Expense.expense_date <= datetime.strptime(end, "%Y-%m-%d").date())
+        if category:
+            query = query.filter(Expense.category.ilike(f"%{category}%"))
+        total = query.with_entities(func.coalesce(func.sum(Expense.amount), 0)).scalar()
+        pagination = query.order_by(Expense.expense_date.desc(), Expense.id.desc()).paginate(page=page, per_page=10, error_out=False)
+        return render_template("expenses.html", expenses=pagination.items, pagination=pagination, total=total, start=start, end=end, category=category)
+
+    @app.route("/gastos/novo", methods=["GET", "POST"])
+    @permission_required("relatorios")
+    def new_expense():
+        if request.method == "POST":
+            expense = Expense(
+                expense_date=datetime.strptime(request.form["expense_date"], "%Y-%m-%d").date(),
+                category=request.form["category"].strip(),
+                description=request.form.get("description", "").strip(),
+                amount=parse_decimal_br(request.form["amount"]),
+                user_id=current_user.id if current_user.is_authenticated else None,
+            )
+            db.session.add(expense)
+            db.session.commit()
+            flash("Gasto cadastrado.")
+            return redirect(url_for("expenses"))
+        return render_template("expense_form.html", expense=None, today=today_brazil())
+
+    @app.route("/gastos/<int:expense_id>/editar", methods=["GET", "POST"])
+    @permission_required("relatorios")
+    def edit_expense(expense_id):
+        expense = db.get_or_404(Expense, expense_id)
+        if request.method == "POST":
+            expense.expense_date = datetime.strptime(request.form["expense_date"], "%Y-%m-%d").date()
+            expense.category = request.form["category"].strip()
+            expense.description = request.form.get("description", "").strip()
+            expense.amount = parse_decimal_br(request.form["amount"])
+            db.session.commit()
+            flash("Gasto atualizado.")
+            return redirect(url_for("expenses"))
+        return render_template("expense_form.html", expense=expense, today=today_brazil())
+
+    @app.route("/gastos/<int:expense_id>/excluir", methods=["POST"])
+    @permission_required("relatorios")
+    def delete_expense(expense_id):
+        expense = db.get_or_404(Expense, expense_id)
+        db.session.delete(expense)
+        db.session.commit()
+        flash("Gasto excluido.")
+        return redirect(url_for("expenses"))
+
     @app.route("/catalogo")
     def catalog():
         settings = get_store_settings()
@@ -734,12 +793,26 @@ def register_routes(app):
         if end:
             query = query.filter(func.date(Sale.created_at) <= datetime.strptime(end, "%Y-%m-%d").date())
         sales_list = query.order_by(Sale.created_at.desc()).all()
-        top_products = (
+        expense_query = Expense.query
+        if start:
+            expense_query = expense_query.filter(Expense.expense_date >= datetime.strptime(start, "%Y-%m-%d").date())
+        if end:
+            expense_query = expense_query.filter(Expense.expense_date <= datetime.strptime(end, "%Y-%m-%d").date())
+        expenses_list = expense_query.order_by(Expense.expense_date.desc(), Expense.id.desc()).all()
+        expenses_total = sum(expense.amount for expense in expenses_list)
+        top_products_query = (
             db.session.query(Product.name, func.sum(SaleItem.quantity).label("qty"))
             .join(Sale, SaleItem.sale_id == Sale.id)
             .join(ProductVariant, SaleItem.variant_id == ProductVariant.id)
             .join(Product, ProductVariant.product_id == Product.id)
             .filter(Sale.status != "cancelada")
+        )
+        if start:
+            top_products_query = top_products_query.filter(func.date(Sale.created_at) >= datetime.strptime(start, "%Y-%m-%d").date())
+        if end:
+            top_products_query = top_products_query.filter(func.date(Sale.created_at) <= datetime.strptime(end, "%Y-%m-%d").date())
+        top_products = (
+            top_products_query
             .group_by(Product.name)
             .order_by(func.sum(SaleItem.quantity).desc())
             .limit(10)
@@ -756,6 +829,9 @@ def register_routes(app):
             total=sum(s.total for s in sales_list),
             custo_total=sum(sum(item.custo_total for item in sale.items) for sale in sales_list),
             lucro_total=sum(sum(item.lucro_total for item in sale.items) for sale in sales_list),
+            expenses=expenses_list,
+            expenses_total=expenses_total,
+            net_profit=sum(sum(item.lucro_total for item in sale.items) for sale in sales_list) - expenses_total,
             inventory_quantity=inventory_quantity,
             inventory_cost_total=inventory_cost_total,
             inventory_revenue_total=inventory_revenue_total,

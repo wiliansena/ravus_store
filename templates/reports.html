@@ -18,6 +18,8 @@
   <article><span>Total vendido</span><strong>{{ total|money }}</strong></article>
   <article><span>Custo estimado</span><strong>{{ custo_total|money }}</strong></article>
   <article><span>Lucro bruto</span><strong>{{ lucro_total|money }}</strong></article>
+  <article><span>Gastos no periodo</span><strong>{{ expenses_total|money }}</strong></article>
+  <article><span>Lucro liquido</span><strong>{{ net_profit|money }}</strong></article>
   <article><span>Estoque baixo</span><strong>{{ low_stock|length }}</strong></article>
 </section>
 
@@ -36,7 +38,8 @@
       <tbody>{% for name, qty in top_products %}<tr><td>{{ name }}</td><td>{{ qty }}</td></tr>{% endfor %}</tbody>
     </table>
   </section>
-  <section class="panel">
+
+<section class="panel">
     <h3>Estoque baixo</h3>
     <table>
       <thead><tr><th>Produto</th><th>Saldo</th></tr></thead>
@@ -44,4 +47,18 @@
     </table>
   </section>
 </section>
+
+<section class="panel">
+    <h3>Gastos do periodo</h3>
+    <table>
+      <thead><tr><th>Data</th><th>Categoria</th><th>Descricao</th><th>Valor</th></tr></thead>
+      <tbody>
+        {% for expense in expenses %}
+        <tr><td>{{ expense.expense_date.strftime('%d/%m/%Y') }}</td><td>{{ expense.category }}</td><td>{{ expense.description or '-' }}</td><td>{{ expense.amount|money }}</td></tr>
+        {% else %}
+        <tr><td colspan="4">Nenhum gasto no periodo.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
 {% endblock %}

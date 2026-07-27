@@ -4,7 +4,7 @@ from decimal import Decimal
 from flask import url_for
 
 from config import Config
-from datetime_utils import now_brazil
+from datetime_utils import now_brazil, today_brazil
 from extensions import db
 
 
@@ -200,6 +200,17 @@ class ProductVariant(db.Model):
         total = sum(m.quantity for m in self.stock_movements)
         sold = sum(item.quantity for item in self.sale_items if not item.sale.is_canceled)
         return total - sold
+
+
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    expense_date = db.Column(db.Date, nullable=False, default=today_brazil)
+    category = db.Column(db.String(80), nullable=False)
+    description = db.Column(db.String(200), default="")
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=now_brazil)
+    user_id = db.Column(db.Integer, db.ForeignKey("app_user.id"), nullable=True)
+    user = db.relationship("User")
 
 
 class StockMovement(db.Model):

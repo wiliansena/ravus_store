@@ -1178,3 +1178,15 @@ th {
     grid-template-columns: minmax(320px, 460px) minmax(420px, 1fr);
   }
 }
+
+.table-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.table-header h3 {
+  margin: 0;
+}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Financeiro</p>
+    <h2>Gastos</h2>
+  </div>
+  <a class="button" href="{{ url_for('new_expense') }}">Novo gasto</a>
+</header>
+
+<form class="panel filters" method="get">
+  <label>Inicio<input name="start" type="date" value="{{ start or '' }}"></label>
+  <label>Fim<input name="end" type="date" value="{{ end or '' }}"></label>
+  <label>Categoria<input name="category" value="{{ category or '' }}" placeholder="Frete, luz, reforma..."></label>
+  <button>Filtrar</button>
+  {% if start or end or category %}
+  <a class="button secondary" href="{{ url_for('expenses') }}">Limpar</a>
+  {% endif %}
+</form>
+
+<section class="panel">
+  <div class="table-header">
+    <h3>Gastos cadastrados</h3>
+    <strong>Total filtrado: {{ total|money }}</strong>
+  </div>
+  <table>
+    <thead><tr><th>Data</th><th>Categoria</th><th>Descricao</th><th>Valor</th><th></th></tr></thead>
+    <tbody>
+      {% for expense in expenses %}
+      <tr>
+        <td>{{ expense.expense_date.strftime('%d/%m/%Y') }}</td>
+        <td>{{ expense.category }}</td>
+        <td>{{ expense.description or '-' }}</td>
+        <td>{{ expense.amount|money }}</td>
+        <td class="actions">
+          <a class="mini-button edit-button" href="{{ url_for('edit_expense', expense_id=expense.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('delete_expense', expense_id=expense.id) }}" onsubmit="return confirm('Excluir este gasto?')">
+            <button class="danger-button" type="submit">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">Nenhum gasto cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set pagination_endpoint = 'expenses' %}
+  {% set pagination_args = {'start': start, 'end': end, 'category': category} %}
+  {% include "_pagination.html" %}
+</section>
+{% endblock %}

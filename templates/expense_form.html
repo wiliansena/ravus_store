@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Financeiro</p>
+    <h2>{{ 'Editar gasto' if expense else 'Novo gasto' }}</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('expenses') }}">Voltar</a>
+</header>
+
+<form class="panel form-narrow" method="post">
+  <label>Data
+    <input name="expense_date" type="date" value="{{ expense.expense_date.strftime('%Y-%m-%d') if expense else today.strftime('%Y-%m-%d') }}" required>
+  </label>
+  <label>Categoria
+    <input name="category" value="{{ expense.category if expense else '' }}" placeholder="Frete, agua, luz, reforma..." required>
+  </label>
+  <label>Descricao
+    <input name="description" value="{{ expense.description if expense else '' }}" placeholder="Opcional">
+  </label>
+  <label>Valor
+    <input name="amount" type="text" inputmode="decimal" value="{{ expense.amount|money|replace('R$ ', '') if expense else '' }}" placeholder="0,00" required>
+  </label>
+  <button>{{ 'Salvar alteracoes' if expense else 'Salvar gasto' }}</button>
+</form>
+{% endblock %}
