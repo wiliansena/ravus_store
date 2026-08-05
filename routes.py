@@ -592,11 +592,9 @@ def register_routes(app):
             if request.form["movement_type"] == "ajuste":
                 variant = db.session.get(ProductVariant, int(request.form["variant_id"]))
                 quantity = quantity - variant.stock
-            preco_custo = (
-                parse_decimal_br(request.form.get("preco_custo") or 0)
-                if request.form["movement_type"] == "entrada"
-                else None
-            )
+            cost_text = request.form.get("preco_custo", "").strip()
+            parsed_cost = parse_decimal_br(cost_text or 0)
+            preco_custo = parsed_cost if request.form["movement_type"] == "entrada" or parsed_cost > 0 else None
             db.session.add(
                 StockMovement(
                     variant_id=int(request.form["variant_id"]),
@@ -609,9 +607,12 @@ def register_routes(app):
             db.session.commit()
             flash("Estoque atualizado.")
             return redirect(url_for("stock"))
+        variants = ProductVariant.query.join(Product).order_by(Product.name).all()
+        variant_costs = {variant.id: custo_medio_variant(variant) for variant in variants}
         return render_template(
             "stock.html",
-            variants=ProductVariant.query.join(Product).order_by(Product.name).all(),
+            variants=variants,
+            variant_costs=variant_costs,
         )
 
     @app.route("/estoque/movimentacoes")
@@ -630,6 +631,30 @@ def register_routes(app):
             movements=pagination.items,
             pagination=pagination,
         )
+
+    @app.route("/estoque/movimentacoes/<int:movement_id>/editar", methods=["GET", "POST"])
+    @permission_required("estoque")
+    def edit_stock_movement(movement_id):
+        movement = db.get_or_404(StockMovement, movement_id)
+        if request.method == "POST":
+            movement.movement_type = request.form["movement_type"]
+            movement.quantity = int(request.form.get("quantity") or 0)
+            cost_text = request.form.get("preco_custo", "").strip()
+            movement.preco_custo = parse_decimal_br(cost_text) if cost_text else None
+            movement.note = request.form.get("note", "").strip()
+            db.session.commit()
+            flash("Movimentacao atualizada.")
+            return redirect(url_for("stock_movements"))
+        return render_template("stock_movement_form.html", movement=movement)
+
+    @app.route("/estoque/movimentacoes/<int:movement_id>/excluir", methods=["POST"])
+    @permission_required("estoque")
+    def delete_stock_movement(movement_id):
+        movement = db.get_or_404(StockMovement, movement_id)
+        db.session.delete(movement)
+        db.session.commit()
+        flash("Movimentacao excluida.")
+        return redirect(url_for("stock_movements"))
 
     @app.route("/vendas", methods=["GET", "POST"])
     @permission_required("vendas")

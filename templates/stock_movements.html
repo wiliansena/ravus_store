@@ -10,7 +10,7 @@
 
 <section class="panel">
   <table>
-    <thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Qtd.</th><th>Custo un.</th><th>Obs.</th></tr></thead>
+    <thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Qtd.</th><th>Custo un.</th><th>Obs.</th><th></th></tr></thead>
     <tbody>
       {% for movement in movements %}
       <tr>
@@ -20,9 +20,15 @@
         <td>{{ movement.quantity }}</td>
         <td>{{ movement.preco_custo|money if movement.preco_custo is not none else '-' }}</td>
         <td>{{ movement.note }}</td>
+        <td class="actions">
+          <a class="mini-button edit-button" href="{{ url_for('edit_stock_movement', movement_id=movement.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('delete_stock_movement', movement_id=movement.id) }}" onsubmit="return confirm('Excluir esta movimentacao? O saldo do estoque sera recalculado.')">
+            <button class="danger-button" type="submit">Excluir</button>
+          </form>
+        </td>
       </tr>
       {% else %}
-      <tr><td colspan="6">Nenhuma movimentação ainda.</td></tr>
+      <tr><td colspan="7">Nenhuma movimentação ainda.</td></tr>
       {% endfor %}
     </tbody>
   </table>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Estoque</p>
+    <h2>Editar movimentacao</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('stock_movements') }}">Voltar</a>
+</header>
+
+<form class="panel form-narrow" method="post">
+  <p><strong>{{ movement.variant.label }}</strong></p>
+  <label>Tipo
+    <select name="movement_type" required>
+      <option value="entrada" {% if movement.movement_type == 'entrada' %}selected{% endif %}>Entrada manual</option>
+      <option value="ajuste" {% if movement.movement_type == 'ajuste' %}selected{% endif %}>Ajuste para saldo final</option>
+    </select>
+  </label>
+  <label>Quantidade movimentada
+    <input name="quantity" type="number" value="{{ movement.quantity }}" required>
+  </label>
+  <label>Preco de custo unitario
+    <input name="preco_custo" type="text" inputmode="decimal" value="{{ movement.preco_custo|money|replace('R$ ', '') if movement.preco_custo is not none else '' }}" placeholder="0,00">
+  </label>
+  <label>Observacao
+    <input name="note" value="{{ movement.note or '' }}">
+  </label>
+  <button>Salvar movimentacao</button>
+</form>
+{% endblock %}

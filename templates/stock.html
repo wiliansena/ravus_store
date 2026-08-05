@@ -17,7 +17,7 @@
     <label>Produto / variacao
       <select name="variant_id" class="product-select" data-placeholder="Pesquisar produto" required>
         {% for variant in variants %}
-        <option value="{{ variant.id }}">{{ variant.label }} - saldo {{ variant.stock }}</option>
+        <option value="{{ variant.id }}">{{ variant.label }} - saldo {{ variant.stock }} - custo {{ variant_costs[variant.id]|money }}</option>
         {% endfor %}
       </select>
     </label>
@@ -36,10 +36,10 @@
   <section class="panel">
     <h3>Saldos</h3>
     <table>
-      <thead><tr><th>Produto</th><th>Saldo</th><th>Minimo</th></tr></thead>
+      <thead><tr><th>Produto</th><th>Saldo</th><th>Custo atual</th><th>Minimo</th></tr></thead>
       <tbody>
         {% for variant in variants %}
-        <tr><td>{{ variant.label }}</td><td>{{ variant.stock }}</td><td>{{ variant.min_stock }}</td></tr>
+        <tr><td>{{ variant.label }}</td><td>{{ variant.stock }}</td><td>{{ variant_costs[variant.id]|money }}</td><td>{{ variant.min_stock }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
