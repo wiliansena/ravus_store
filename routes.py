@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from urllib.parse import quote_plus
 
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload
@@ -55,6 +55,7 @@ def register_routes(app):
             if not user or not user.active or not check_password_hash(user.password_hash, request.form["password"]):
                 flash("E-mail ou senha invalidos.", "error")
                 return redirect(url_for("login"))
+            session.permanent = True
             login_user(user)
             return redirect(request.args.get("next") or url_for("dashboard"))
         return render_template("login.html")
