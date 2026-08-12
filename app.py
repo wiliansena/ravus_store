@@ -33,10 +33,12 @@ def create_app():
 
     @app.context_processor
     def inject_store_settings():
+        style_path = os.path.join(app.static_folder, "style.css")
+        static_version = int(os.path.getmtime(style_path)) if os.path.exists(style_path) else 1
         try:
-            return {"store_settings": get_store_settings()}
+            return {"store_settings": get_store_settings(), "static_version": static_version}
         except Exception:
-            return {"store_settings": None}
+            return {"store_settings": None, "static_version": static_version}
 
     register_routes(app)
     return app
