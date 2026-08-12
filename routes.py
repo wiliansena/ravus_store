@@ -790,6 +790,15 @@ def register_routes(app):
         settings = get_store_settings()
         whatsapp = settings.whatsapp_number or app.config["WHATSAPP_NUMBER"]
         search = request.args.get("q", "").strip()
+        category_id = request.args.get("categoria", type=int)
+        categories = (
+            Category.query
+            .join(Product, Product.category_id == Category.id)
+            .filter(Product.active.is_(True))
+            .distinct()
+            .order_by(Category.name)
+            .all()
+        )
         product_options = (
             selectinload(Product.category),
             selectinload(Product.images),
@@ -799,14 +808,27 @@ def register_routes(app):
             selectinload(Product.variants).selectinload(ProductVariant.sale_items),
         )
         query = Product.query.filter_by(active=True).options(*product_options)
+        if category_id:
+            query = query.filter(Product.category_id == category_id)
         featured_products = []
         if search:
             query = query.filter(Product.name.ilike(f"%{search}%"))
-            products = query.order_by(Product.name).all()
-        else:
+        if not search and not category_id:
             featured_products = query.filter_by(featured=True).order_by(Product.name).all()
             products = query.filter_by(featured=False).order_by(Product.name).all()
-        return render_template("catalog.html", products=products, featured_products=featured_products, whatsapp=whatsapp, quote_plus=quote_plus, search=search, settings=settings)
+        else:
+            products = query.order_by(Product.name).all()
+        return render_template(
+            "catalog.html",
+            products=products,
+            featured_products=featured_products,
+            categories=categories,
+            selected_category_id=category_id,
+            whatsapp=whatsapp,
+            quote_plus=quote_plus,
+            search=search,
+            settings=settings,
+        )
 
     @app.route("/relatorios")
     @permission_required("relatorios")

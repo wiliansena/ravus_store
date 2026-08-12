@@ -18,14 +18,24 @@
 </section>
 {% endif %}
 <form class="catalog-search" method="get">
+  {% if selected_category_id %}
+  <input type="hidden" name="categoria" value="{{ selected_category_id }}">
+  {% endif %}
   <input name="q" value="{{ search or '' }}" placeholder="Pesquisar produto">
   <button>Pesquisar</button>
-  {% if search %}
+  {% if search or selected_category_id %}
   <a class="button secondary" href="{{ url_for('catalog') }}">Limpar</a>
   {% endif %}
 </form>
 
-
+{% if categories %}
+<nav class="catalog-category-filter" aria-label="Categorias do catalogo">
+  <a class="{{ 'active' if not selected_category_id else '' }}" href="{{ url_for('catalog', q=search) if search else url_for('catalog') }}">Todos</a>
+  {% for category in categories %}
+  <a class="{{ 'active' if selected_category_id == category.id else '' }}" href="{{ url_for('catalog', categoria=category.id, q=search) if search else url_for('catalog', categoria=category.id) }}">{{ category.name }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
 <section class="catalog-layout" data-whatsapp="{{ whatsapp }}">
   <div class="catalog-products-area">
     {% if featured_products %}
@@ -49,7 +59,7 @@
         {% set product_index = loop.index0 + (featured_products|length) %}
         {% include "_catalog_product_card.html" %}
         {% else %}
-        <p>{{ 'Nenhum produto encontrado.' if search else 'Nenhum produto ativo.' }}</p>
+        <p>{{ 'Nenhum produto encontrado.' if search or selected_category_id else 'Nenhum produto ativo.' }}</p>
         {% endfor %}
       </div>
     </section>
