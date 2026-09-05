@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from decimal import Decimal
 from urllib.parse import quote_plus
 
 from flask import abort, flash, redirect, render_template, request, session, url_for
@@ -14,6 +15,7 @@ from datetime_utils import now_brazil, today_brazil
 from extensions import db
 from models import (
     Brand,
+    CashAdjustment,
     Category,
     Client,
     Color,
@@ -727,6 +729,101 @@ def register_routes(app):
         flash("Venda cancelada. Os itens voltaram ao estoque.")
         return redirect(url_for("receipt", sale_id=sale.id))
 
+    def cash_summary(start=None, end=None):
+        sales_query = Sale.query.filter(Sale.status != "cancelada")
+        expenses_query = Expense.query
+        purchases_query = StockMovement.query.filter(
+            StockMovement.movement_type == "entrada",
+            StockMovement.quantity > 0,
+            StockMovement.preco_custo.isnot(None),
+        )
+        adjustments_query = CashAdjustment.query
+
+        if start:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            sales_query = sales_query.filter(func.date(Sale.created_at) >= start_date)
+            expenses_query = expenses_query.filter(Expense.expense_date >= start_date)
+            purchases_query = purchases_query.filter(func.date(StockMovement.created_at) >= start_date)
+            adjustments_query = adjustments_query.filter(CashAdjustment.adjustment_date >= start_date)
+        if end:
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            sales_query = sales_query.filter(func.date(Sale.created_at) <= end_date)
+            expenses_query = expenses_query.filter(Expense.expense_date <= end_date)
+            purchases_query = purchases_query.filter(func.date(StockMovement.created_at) <= end_date)
+            adjustments_query = adjustments_query.filter(CashAdjustment.adjustment_date <= end_date)
+
+        sales_total = sum(sale.total for sale in sales_query.all())
+        expenses_total = sum(expense.amount for expense in expenses_query.all())
+        purchases_total = sum((movement.preco_custo or Decimal("0")) * movement.quantity for movement in purchases_query.all())
+        adjustments_total = sum(adjustment.signed_amount for adjustment in adjustments_query.all())
+        balance = adjustments_total + sales_total - expenses_total - purchases_total
+        return {
+            "sales_total": sales_total,
+            "expenses_total": expenses_total,
+            "purchases_total": purchases_total,
+            "adjustments_total": adjustments_total,
+            "balance": balance,
+        }
+
+    @app.route("/caixa")
+    @permission_required("relatorios")
+    def cash_register():
+        page = request.args.get("page", 1, type=int)
+        start = request.args.get("start")
+        end = request.args.get("end")
+        summary = cash_summary()
+        period_summary = cash_summary(start, end)
+        pagination = CashAdjustment.query.order_by(CashAdjustment.adjustment_date.desc(), CashAdjustment.id.desc()).paginate(page=page, per_page=10, error_out=False)
+        return render_template(
+            "cash.html",
+            adjustments=pagination.items,
+            pagination=pagination,
+            summary=summary,
+            period_summary=period_summary,
+            start=start,
+            end=end,
+        )
+
+    @app.route("/caixa/novo", methods=["GET", "POST"])
+    @permission_required("relatorios")
+    def new_cash_adjustment():
+        if request.method == "POST":
+            adjustment = CashAdjustment(
+                adjustment_date=datetime.strptime(request.form["adjustment_date"], "%Y-%m-%d").date(),
+                movement_type=request.form["movement_type"],
+                amount=parse_decimal_br(request.form["amount"]),
+                description=request.form.get("description", "").strip(),
+                user_id=current_user.id if current_user.is_authenticated else None,
+            )
+            db.session.add(adjustment)
+            db.session.commit()
+            flash("Lancamento de caixa cadastrado.")
+            return redirect(url_for("cash_register"))
+        return render_template("cash_form.html", adjustment=None, today=today_brazil())
+
+    @app.route("/caixa/<int:adjustment_id>/editar", methods=["GET", "POST"])
+    @permission_required("relatorios")
+    def edit_cash_adjustment(adjustment_id):
+        adjustment = db.get_or_404(CashAdjustment, adjustment_id)
+        if request.method == "POST":
+            adjustment.adjustment_date = datetime.strptime(request.form["adjustment_date"], "%Y-%m-%d").date()
+            adjustment.movement_type = request.form["movement_type"]
+            adjustment.amount = parse_decimal_br(request.form["amount"])
+            adjustment.description = request.form.get("description", "").strip()
+            db.session.commit()
+            flash("Lancamento de caixa atualizado.")
+            return redirect(url_for("cash_register"))
+        return render_template("cash_form.html", adjustment=adjustment, today=today_brazil())
+
+    @app.route("/caixa/<int:adjustment_id>/excluir", methods=["POST"])
+    @permission_required("relatorios")
+    def delete_cash_adjustment(adjustment_id):
+        adjustment = db.get_or_404(CashAdjustment, adjustment_id)
+        db.session.delete(adjustment)
+        db.session.commit()
+        flash("Lancamento de caixa excluido.")
+        return redirect(url_for("cash_register"))
+
     @app.route("/gastos")
     @permission_required("relatorios")
     def expenses():
@@ -848,6 +945,23 @@ def register_routes(app):
             expense_query = expense_query.filter(Expense.expense_date <= datetime.strptime(end, "%Y-%m-%d").date())
         expenses_list = expense_query.order_by(Expense.expense_date.desc(), Expense.id.desc()).all()
         expenses_total = sum(expense.amount for expense in expenses_list)
+        report_purchases_query = StockMovement.query.filter(
+            StockMovement.movement_type == "entrada",
+            StockMovement.quantity > 0,
+            StockMovement.preco_custo.isnot(None),
+        )
+        report_adjustments_query = CashAdjustment.query
+        if start:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            report_purchases_query = report_purchases_query.filter(func.date(StockMovement.created_at) >= start_date)
+            report_adjustments_query = report_adjustments_query.filter(CashAdjustment.adjustment_date >= start_date)
+        if end:
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            report_purchases_query = report_purchases_query.filter(func.date(StockMovement.created_at) <= end_date)
+            report_adjustments_query = report_adjustments_query.filter(CashAdjustment.adjustment_date <= end_date)
+        purchases_total = sum((movement.preco_custo or Decimal("0")) * movement.quantity for movement in report_purchases_query.all())
+        cash_adjustments_total = sum(adjustment.signed_amount for adjustment in report_adjustments_query.all())
+        cash_balance = cash_summary()["balance"]
         top_products_query = (
             db.session.query(Product.name, func.sum(SaleItem.quantity).label("qty"))
             .join(Sale, SaleItem.sale_id == Sale.id)
@@ -879,6 +993,9 @@ def register_routes(app):
             lucro_total=sum(sum(item.lucro_total for item in sale.items) for sale in sales_list),
             expenses=expenses_list,
             expenses_total=expenses_total,
+            purchases_total=purchases_total,
+            cash_adjustments_total=cash_adjustments_total,
+            cash_balance=cash_balance,
             net_profit=sum(sum(item.lucro_total for item in sale.items) for sale in sales_list) - expenses_total,
             inventory_quantity=inventory_quantity,
             inventory_cost_total=inventory_cost_total,

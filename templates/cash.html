@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Financeiro</p>
+    <h2>Caixa</h2>
+  </div>
+  <a class="button" href="{{ url_for('new_cash_adjustment') }}">Novo lancamento</a>
+</header>
+
+<section class="metrics">
+  <article><span>Saldo atual em caixa</span><strong>{{ summary.balance|money }}</strong></article>
+  <article><span>Vendas recebidas</span><strong>{{ summary.sales_total|money }}</strong></article>
+  <article><span>Gastos cadastrados</span><strong>{{ summary.expenses_total|money }}</strong></article>
+  <article><span>Compras de estoque</span><strong>{{ summary.purchases_total|money }}</strong></article>
+</section>
+
+<form class="panel filters" method="get">
+  <label>Inicio<input name="start" type="date" value="{{ start or '' }}"></label>
+  <label>Fim<input name="end" type="date" value="{{ end or '' }}"></label>
+  <button>Filtrar periodo</button>
+  {% if start or end %}
+  <a class="button secondary" href="{{ url_for('cash_register') }}">Limpar</a>
+  {% endif %}
+</form>
+
+{% if start or end %}
+<section class="metrics">
+  <article><span>Resultado do periodo</span><strong>{{ period_summary.balance|money }}</strong></article>
+  <article><span>Vendas no periodo</span><strong>{{ period_summary.sales_total|money }}</strong></article>
+  <article><span>Gastos no periodo</span><strong>{{ period_summary.expenses_total|money }}</strong></article>
+  <article><span>Compras no periodo</span><strong>{{ period_summary.purchases_total|money }}</strong></article>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="table-header">
+    <h3>Ajustes manuais</h3>
+    <span>Use para saldo inicial, reforco de caixa, retirada ou correcao.</span>
+  </div>
+  <table>
+    <thead><tr><th>Data</th><th>Tipo</th><th>Descricao</th><th>Valor</th><th></th></tr></thead>
+    <tbody>
+      {% for adjustment in adjustments %}
+      <tr>
+        <td>{{ adjustment.adjustment_date.strftime('%d/%m/%Y') }}</td>
+        <td>{{ 'Entrada' if adjustment.movement_type == 'entrada' else 'Saida' }}</td>
+        <td>{{ adjustment.description or '-' }}</td>
+        <td>{{ adjustment.signed_amount|money }}</td>
+        <td class="actions">
+          <a class="mini-button edit-button" href="{{ url_for('edit_cash_adjustment', adjustment_id=adjustment.id) }}">Editar</a>
+          <form method="post" action="{{ url_for('delete_cash_adjustment', adjustment_id=adjustment.id) }}" onsubmit="return confirm('Excluir este lancamento de caixa?')">
+            <button class="danger-button" type="submit">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">Nenhum ajuste manual cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% set pagination_endpoint = 'cash_register' %}
+  {% set pagination_args = {'start': start, 'end': end} %}
+  {% include "_pagination.html" %}
+</section>
+{% endblock %}

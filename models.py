@@ -201,6 +201,19 @@ class ProductVariant(db.Model):
         sold = sum(item.quantity for item in self.sale_items if not item.sale.is_canceled)
         return total - sold
 
+class CashAdjustment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    adjustment_date = db.Column(db.Date, nullable=False, default=today_brazil)
+    movement_type = db.Column(db.String(20), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    description = db.Column(db.String(200), default="")
+    created_at = db.Column(db.DateTime, nullable=False, default=now_brazil)
+    user_id = db.Column(db.Integer, db.ForeignKey("app_user.id"), nullable=True)
+    user = db.relationship("User")
+
+    @property
+    def signed_amount(self):
+        return self.amount if self.movement_type == "entrada" else -self.amount
 
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)

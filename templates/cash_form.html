@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Financeiro</p>
+    <h2>{{ 'Editar lancamento' if adjustment else 'Novo lancamento de caixa' }}</h2>
+  </div>
+  <a class="button secondary" href="{{ url_for('cash_register') }}">Voltar</a>
+</header>
+
+<form class="panel form-narrow" method="post">
+  <label>Data
+    <input name="adjustment_date" type="date" value="{{ adjustment.adjustment_date.strftime('%Y-%m-%d') if adjustment else today.strftime('%Y-%m-%d') }}" required>
+  </label>
+  <label>Tipo
+    <select name="movement_type" required>
+      <option value="entrada" {% if adjustment and adjustment.movement_type == 'entrada' %}selected{% endif %}>Entrada</option>
+      <option value="saida" {% if adjustment and adjustment.movement_type == 'saida' %}selected{% endif %}>Saida</option>
+    </select>
+  </label>
+  <label>Valor
+    <input name="amount" type="text" inputmode="decimal" value="{{ adjustment.amount|money|replace('R$ ', '') if adjustment else '' }}" placeholder="0,00" required>
+  </label>
+  <label>Descricao
+    <input name="description" value="{{ adjustment.description if adjustment else '' }}" placeholder="Saldo inicial, retirada, correcao...">
+  </label>
+  <button>Salvar lancamento</button>
+</form>
+{% endblock %}
