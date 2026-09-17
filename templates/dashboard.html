@@ -2,22 +2,32 @@
 {% block content %}
 <header class="page-header">
   <div>
-    <p class="eyebrow">Controle da loja</p>
+    <p class="eyebrow">Visão geral</p>
     <div class="dashboard-brand">
       {% if store_settings and store_settings.logo_url %}
       <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}">
       {% endif %}
-      <h2>{{ store_settings.store_name if store_settings else 'Resumo de hoje' }}</h2>
+      <h2>Olá, {{ current_user.name.split()[0] }}!</h2>
     </div>
+    <p class="welcome-copy">Vamos cuidar da sua loja?</p>
   </div>
-  <a class="button" href="{{ url_for('sales') }}">Nova venda</a>
+  <a class="button" href="{{ url_for('new_sale') }}">{{ icon('plus') }} Nova venda</a>
 </header>
 
 <section class="metrics">
-  <article><span>Produtos</span><strong>{{ product_count }}</strong></article>
-  <article><span>Pe&ccedil;as em estoque</span><strong>{{ stock_total }}</strong></article>
-  <article><span>Vendas no m&ecirc;s</span><strong>{{ sales_total|money }}</strong></article>
-  <article><span>Estoque baixo</span><strong>{{ low_stock|length }}</strong></article>
+  <article class="metric-featured"><div class="metric-icon">{{ icon('chart') }}</div><span>Vendas no mês</span><strong>{{ sales_total|money }}</strong></article>
+  <article><div class="metric-icon">{{ icon('bag') }}</div><span>Produtos</span><strong>{{ product_count }}</strong></article>
+  <article><div class="metric-icon">{{ icon('box') }}</div><span>Peças em estoque</span><strong>{{ stock_total }}</strong></article>
+  <article class="metric-warning"><div class="metric-icon">{{ icon('box') }}</div><span>Estoque baixo</span><strong>{{ low_stock|length }}</strong></article>
+</section>
+
+<section class="quick-section" aria-labelledby="quick-title">
+  <div class="table-header"><div><p class="eyebrow">Seu dia a dia</p><h3 id="quick-title">O que vamos fazer?</h3></div></div>
+  <div class="quick-grid">
+    {% for route, title, description, glyph in [('products', 'Produtos', 'Gerencie sua coleção', 'bag'), ('stock', 'Estoque', 'Entradas e movimentações', 'box'), ('cash_register', 'Caixa', 'Acompanhe o movimento', 'wallet'), ('catalog', 'Catálogo', 'Veja a vitrine da loja', 'grid')] %}
+    <a class="quick-card" href="{{ url_for(route) }}">{{ icon(glyph) }}<strong>{{ title }}</strong><small>{{ description }}</small></a>
+    {% endfor %}
+  </div>
 </section>
 
 <section class="panel">

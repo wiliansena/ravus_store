@@ -28,6 +28,10 @@
     <button class="danger-button" type="submit">Cancelar venda e devolver estoque</button>
   </form>
   {% endif %}
-  <div class="actions"><a class="button" href="{{ url_for('sales') }}">Nova venda</a><button onclick="window.print()">Imprimir</button></div>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('sales') }}">Voltar para vendas</a>
+    <a class="button" href="{{ url_for('new_sale') }}">Nova venda</a>
+    <button onclick="window.print()">Imprimir</button>
+  </div>
 </section>
 {% endblock %}

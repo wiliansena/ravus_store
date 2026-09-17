@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block head_extra %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<header class="page-header">
+  <div>
+    <p class="eyebrow">Vendas</p>
+    <h2>Nova venda</h2>
+  </div>
+<a class="button secondary" href="{{ url_for('sales') }}">Voltar para vendas</a>
+</header>
+
+  <form class="panel form-narrow" method="post" action="{{ url_for('new_sale') }}">
+    <h3>Nova venda</h3>
+    <label>Cliente
+      <select name="client_id"><option value="">Balcão</option>{% for client in clients %}<option value="{{ client.id }}">{{ client.name }}</option>{% endfor %}</select>
+    </label>
+    <div id="sale-items" class="sale-items">
+      <div class="sale-row">
+        <label>Item
+          <select name="variant_id" class="product-select" data-placeholder="Pesquisar produto" required>
+            <option value="">Selecione</option>
+            {% for variant in variants %}
+            <option value="{{ variant.id }}">{{ variant.label }} - {{ variant.product.preco_venda|money }} - saldo {{ variant.stock }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Qtd.<input name="quantity" type="number" min="1" value="1" required></label>
+        <button class="danger-button remove-sale-item" type="button">Remover</button>
+      </div>
+    </div>
+    <button class="button" id="add-sale-item" type="button">Adicionar item</button>
+
+    <template id="sale-item-template">
+      <div class="sale-row">
+        <label>Item
+        <select name="variant_id" class="product-select" data-placeholder="Pesquisar produto">
+          <option value="">Selecione</option>
+          {% for variant in variants %}
+          <option value="{{ variant.id }}">{{ variant.label }} - {{ variant.product.preco_venda|money }} - saldo {{ variant.stock }}</option>
+          {% endfor %}
+        </select>
+      </label>
+        <label>Qtd.<input name="quantity" type="number" min="1" value="1"></label>
+        <button class="danger-button remove-sale-item" type="button">Remover</button>
+      </div>
+    </template>
+
+    <div class="row">
+      <label>Desconto<input name="discount" type="text" inputmode="decimal" placeholder="0,00" value="0,00"></label>
+      <label>Pagamento
+        <select name="payment_method" required>
+          <option>Dinheiro</option>
+          <option>Pix</option>
+          <option>Cartão débito</option>
+          <option>Cartão crédito</option>
+        </select>
+      </label>
+    </div>
+    <button>Fechar venda</button>
+  </form>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  const saleItems = document.getElementById("sale-items");
+  const saleItemTemplate = document.getElementById("sale-item-template");
+  const addSaleItem = document.getElementById("add-sale-item");
+
+  function updateSaleItemButtons() {
+    const rows = saleItems.querySelectorAll(".sale-row");
+    rows.forEach((row) => {
+      const button = row.querySelector(".remove-sale-item");
+      button.disabled = rows.length === 1;
+    });
+  }
+
+  function initProductSelects(scope = document) {
+    if (!window.jQuery || !jQuery.fn.select2) return;
+    jQuery(scope).find(".product-select").each(function () {
+      if (jQuery(this).hasClass("select2-hidden-accessible")) return;
+      jQuery(this).select2({
+        placeholder: this.dataset.placeholder || "Pesquisar produto",
+        allowClear: true,
+        width: "100%",
+        language: {
+          noResults: () => "Nenhum produto encontrado"
+        }
+      });
+    });
+  }
+
+  addSaleItem.addEventListener("click", () => {
+    const fragment = saleItemTemplate.content.cloneNode(true);
+    const row = fragment.querySelector(".sale-row");
+    saleItems.appendChild(fragment);
+    initProductSelects(row);
+    updateSaleItemButtons();
+  });
+
+
+  saleItems.addEventListener("click", (event) => {
+    if (!event.target.classList.contains("remove-sale-item")) {
+      return;
+    }
+    event.target.closest(".sale-row").remove();
+    updateSaleItemButtons();
+  });
+
+  initProductSelects();
+  updateSaleItemButtons();
+</script>
+{% endblock %}

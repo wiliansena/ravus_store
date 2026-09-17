@@ -659,9 +659,17 @@ def register_routes(app):
         flash("Movimentacao excluida.")
         return redirect(url_for("stock_movements"))
 
-    @app.route("/vendas", methods=["GET", "POST"])
+    @app.route("/vendas")
     @permission_required("vendas")
     def sales():
+        pagination = Sale.query.order_by(Sale.created_at.desc(), Sale.id.desc()).paginate(
+            page=request.args.get("page", 1, type=int), per_page=30, error_out=False
+        )
+        return render_template("sales.html", sales=pagination.items, pagination=pagination)
+
+    @app.route("/vendas/nova", methods=["GET", "POST"])
+    @permission_required("vendas")
+    def new_sale():
         if request.method == "POST":
             variant_ids = request.form.getlist("variant_id")
             quantities = request.form.getlist("quantity")
@@ -678,11 +686,11 @@ def register_routes(app):
                     continue
                 if quantity_int > variant.stock:
                     flash(f"Estoque insuficiente para {variant.label}.", "error")
-                    return redirect(url_for("sales"))
+                    return redirect(url_for("new_sale"))
                 selected_items.append((variant, quantity_int))
             if not selected_items:
                 flash("Inclua pelo menos um item na venda.", "error")
-                return redirect(url_for("sales"))
+                return redirect(url_for("new_sale"))
             sale = Sale(
                 client_id=request.form.get("client_id") or None,
                 discount=parse_decimal_br(request.form.get("discount") or 0),
@@ -703,8 +711,7 @@ def register_routes(app):
             flash("Venda registrada.")
             return redirect(url_for("receipt", sale_id=sale.id))
         return render_template(
-            "sales.html",
-            sales=Sale.query.order_by(Sale.created_at.desc()).limit(30).all(),
+            "sale_form.html",
             clients=Client.query.order_by(Client.name).all(),
             variants=ProductVariant.query.join(Product).order_by(Product.name).all(),
         )

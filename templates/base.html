@@ -1,50 +1,49 @@
+{% from '_icons.html' import icon %}
+{% set navigation = [('dashboard','Início','home'),('products','Produtos','bag'),('stock','Estoque','box'),('sales','Vendas','cart'),('catalog','Catálogo','grid'),('reports','Relatórios','chart'),('cash_register','Caixa','wallet'),('expenses','Gastos','receipt'),('users','Usuários','users'),('roles','Perfis','shield'),('permissions','Permissões','lock'),('simple_registry','Cadastros','grid'),('store_settings','Configurações','settings')] %}
+{% set endpoint = request.endpoint or '' %}
+{% set active = {'new_product':'products','edit_product':'products','product_images':'products','stock_movements':'stock','edit_stock_movement':'stock','receipt':'sales','new_sale':'sales','new_cash_adjustment':'cash_register','edit_cash_adjustment':'cash_register','new_expense':'expenses','edit_expense':'expenses','new_user':'users','edit_user':'users','new_role':'roles','edit_role':'roles','new_permission':'permissions','edit_permission':'permissions','new_registry_item':'simple_registry','edit_registry_item':'simple_registry'}.get(endpoint, endpoint) %}
 <!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#004766">
   <title>{{ store_settings.store_name if store_settings else 'Ravus Store' }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=static_version) }}">
   {% block head_extra %}{% endblock %}
 </head>
-<body>
-  <aside>
-    <a class="brand" href="{{ url_for('dashboard') }}">
-      {% if store_settings and store_settings.logo_url %}
-      <img src="{{ store_settings.logo_url }}" alt="{{ store_settings.store_name }}">
-      {% endif %}
-      <span>{{ store_settings.store_name if store_settings else 'Ravus Store' }}</span>
+<body class="app-page">
+  <a href="#main-content" class="skip-link">Ir para o conteúdo</a>
+  <header class="appbar">
+    <a class="app-brand" href="{{ url_for('dashboard') }}">
+      {% if store_settings and store_settings.logo_url %}<img src="{{ store_settings.logo_url }}" alt="">{% else %}<span class="brand-symbol">{{ icon('bag') }}</span>{% endif %}
+      <span><strong>{{ store_settings.store_name if store_settings else 'Ravus Store' }}</strong><small>Sua loja na palma da mão</small></span>
     </a>
-    <div class="user-box">
-      <strong>{{ current_user.name }}</strong>
-      <span>{{ current_user.role.name if current_user.role else 'Sem perfil' }}</span>
-    </div>
-    <nav>
-      <a href="{{ url_for('dashboard') }}">Início</a>
-      <a href="{{ url_for('products') }}">Produtos</a>
-      <a href="{{ url_for('stock') }}">Estoque</a>
-      <a href="{{ url_for('sales') }}">Vendas</a>
-      <a href="{{ url_for('catalog') }}">Catálogo</a>
-      <a href="{{ url_for('reports') }}">Relatórios</a>
-      <a href="{{ url_for('cash_register') }}">Caixa</a>
-      <a href="{{ url_for('expenses') }}">Gastos</a>
-      <a href="{{ url_for('users') }}">Usuários</a>
-      <a href="{{ url_for('roles') }}">Perfis</a>
-      <a href="{{ url_for('permissions') }}">Permissões</a>
-      <a href="{{ url_for('simple_registry', kind='categorias') }}">Cadastros</a>
-      <a href="{{ url_for('store_settings') }}">Configurações</a>
-      <a href="{{ url_for('logout') }}">Sair</a>
-    </nav>
+    <button class="avatar" type="button" data-open-menu aria-label="Abrir menu da conta" aria-controls="app-menu" aria-expanded="false">{{ current_user.name[:1]|upper }}</button>
+  </header>
+  <aside class="app-sidebar" aria-label="Menu principal">
+    <div class="user-box"><strong>{{ current_user.name }}</strong><span>{{ current_user.role.name if current_user.role else 'Sem perfil' }}</span></div>
+    <nav aria-label="Navegação principal">{% for route, label, glyph in navigation %}<a href="{{ url_for(route, kind='categorias') if route == 'simple_registry' else url_for(route) }}" {% if active == route %}aria-current="page"{% endif %}>{{ icon(glyph) }}{{ label }}</a>{% endfor %}<a href="{{ url_for('logout') }}">{{ icon('logout') }}Sair</a></nav>
   </aside>
-  <main>
+  <main id="main-content" tabindex="-1">
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% set category, message = messages[0] %}
-        <div class="flash {{ category }}">{{ message }}</div>
-      {% endif %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}" role="status">{{ message }}</div>
+      {% endfor %}
     {% endwith %}
     {% block content %}{% endblock %}
   </main>
+  <nav class="bottom-nav" aria-label="Atalhos principais">
+    {% for route, label, glyph in navigation[:4] %}<a href="{{ url_for(route) }}" {% if active == route %}aria-current="page"{% endif %}>{{ icon(glyph) }}<span>{{ label }}</span></a>{% endfor %}
+    <button type="button" data-open-menu aria-controls="app-menu" aria-expanded="false" {% if active not in ['dashboard','products','stock','sales'] %}class="is-active"{% endif %}>{{ icon('grid') }}<span>Mais</span></button>
+  </nav>
+  <dialog id="app-menu" class="menu-sheet" aria-labelledby="menu-title">
+    <header class="table-header"><div><p class="eyebrow">Sua loja</p><h2 id="menu-title">Todos os acessos</h2></div><button type="button" class="icon-button" data-close-menu aria-label="Fechar menu">{{ icon('close') }}</button></header>
+    <div class="menu-profile"><span class="avatar">{{ current_user.name[:1]|upper }}</span><div><strong>{{ current_user.name }}</strong><small>{{ current_user.role.name if current_user.role else 'Sem perfil' }}</small></div></div>
+    <nav class="menu-grid" aria-label="Todos os acessos">{% for route, label, glyph in navigation %}<a href="{{ url_for(route, kind='categorias') if route == 'simple_registry' else url_for(route) }}" {% if active == route %}aria-current="page"{% endif %}>{{ icon(glyph) }}{{ label }}</a>{% endfor %}</nav>
+    <a class="button secondary logout-link" href="{{ url_for('logout') }}">{{ icon('logout') }}Sair da conta</a>
+  </dialog>
+  <script src="{{ url_for('static', filename='app.js', v=static_version) }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
